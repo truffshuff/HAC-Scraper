@@ -1,0 +1,44 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configure HAC Grades",
+        "description": "Enter your Home Access Center credentials. All quarters will be fetched automatically.",
+        "data": {
+          "student_id": "Student ID",
+          "school_url": "School HAC URL",
+          "username": "Username",
+          "password": "Password"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to HAC. Please check your credentials and URL.",
+      "unknown": "Unexpected error occurred"
+    },
+    "abort": {
+      "already_configured": "This HAC account is already configured"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "HAC Grades Options",
+        "description": "Configure how often HAC grades are automatically fetched. You can also use the Force Refresh button for immediate updates.",
+        "data": {
+          "scan_interval": "Update interval (hours)"
+        },
+        "data_description": {
+          "scan_interval": "How often to automatically fetch grades from HAC (1-24 hours). Note: Each student has a random delay of 0-2 minutes to prevent overloading browserless."
+        }
+      }
+    }
+  },
+  "entity": {
+    "button": {
+      "force_refresh": {
+        "name": "Force Refresh"
+      }
+    }
+  }
+}
