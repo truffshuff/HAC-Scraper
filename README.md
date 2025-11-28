@@ -41,7 +41,7 @@ Run browserless via Docker on your network:
 docker run -d -p 3000:3000 --name browserless browserless/chrome
 ```
 
-**Important**: Update the browserless URL in the integration code if not using `192.168.1.236:3000` (see hac_client.py line 63).
+**Important**: The browserless URL can be configured during integration setup (defaults to `http://homeassistant.local:3000/function`).
 
 ### Optional: Custom Dashboard Cards
 
@@ -80,10 +80,10 @@ Install via: **HACS** → **Frontend** → Search for card name
 3. Search for **HAC Grades**
 4. Enter your configuration:
    - **Student ID**: The student's unique ID from HAC (will be validated)
-   - **Quarter**: Select quarter (Q1, Q2, Q3, or Q4)
    - **School HAC URL**: Your school's Home Access Center URL (e.g., `https://hac.hcps.org`)
    - **Username**: Your HAC username
    - **Password**: Your HAC password
+   - **Browserless URL** (optional): URL to your browserless instance (defaults to `http://homeassistant.local:3000/function`)
 
 ## Entities Created
 

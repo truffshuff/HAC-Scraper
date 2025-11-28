@@ -9,7 +9,7 @@
 - **Browserless Chrome** - Required for scraping HAC websites
   - Install as Home Assistant add-on or via Docker
   - See [Prerequisites in README](README.md#prerequisites) for detailed setup
-  - Default expects browserless at `192.168.1.236:3000`
+  - Default URL: `http://homeassistant.local:3000/function` (configurable during setup)
 - **HACS** (recommended for easiest installation)
 
 ### Optional (For Enhanced Dashboards)
@@ -50,10 +50,10 @@ Install optional cards via: **HACS** → **Frontend** → Search for card name
 
    ```
    Student ID: 12345 (your student's ID from HAC)
-   Quarter: Q2 (select Q1, Q2, Q3, or Q4)
    School HAC URL: https://hac.hcps.org (or your school's URL)
    Username: your.username
    Password: your_password
+   Browserless URL: http://homeassistant.local:3000/function (optional, leave default if using standard setup)
    ```
 
 5. Click **Submit**
@@ -169,9 +169,9 @@ After installation, you can adjust settings:
 
 **Connection Failed**
 - Verify browserless add-on is running and started
-- Check the port (default: 3000) matches integration code
+- Check the port (default: 3000) is correct
 - If using Docker, ensure it's accessible from Home Assistant
-- Update `hac_client.py` line 63 if using different IP/port
+- Update the browserless URL in the integration configuration if using a different IP/port
 
 **Timeout Errors**
 - Browserless may be overwhelmed if multiple students configured

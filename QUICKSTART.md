@@ -20,7 +20,7 @@ Before generating dashboards:
    - **Bar Card** (Recommended) - Grade percentage displays
 
 2. **Verify Integration Setup**:
-   - Browserless Chrome running
+   - Browserless Chrome running (default: `http://homeassistant.local:3000/function`)
    - HAC Grades integration configured
    - Sensors created successfully
 

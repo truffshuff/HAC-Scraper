@@ -10,11 +10,13 @@ CONF_PASSWORD = "password"
 CONF_STUDENT_ID = "student_id"
 CONF_QUARTER = "quarter"
 CONF_STUDENTS = "students"
+CONF_BROWSERLESS_URL = "browserless_url"
 
 # Defaults
 DEFAULT_SCAN_INTERVAL = timedelta(hours=6)
 DEFAULT_TIMEOUT = 60
 DEFAULT_QUARTER = "Q2"  # Default to current quarter
+DEFAULT_BROWSERLESS_URL = "http://homeassistant.local:3000/function"
 
 # Quarter options
 QUARTERS = ["Q1", "Q2", "Q3", "Q4"]

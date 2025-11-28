@@ -9,7 +9,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
 
-from .const import DEFAULT_SCAN_INTERVAL, DEFAULT_QUARTER, DOMAIN
+from .const import DEFAULT_SCAN_INTERVAL, DEFAULT_QUARTER, DEFAULT_BROWSERLESS_URL, DOMAIN
 from .hac_client import HACClient
 
 _LOGGER = logging.getLogger(__name__)
@@ -27,6 +27,7 @@ class HACDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         student_id: str,
         quarter: str = DEFAULT_QUARTER,
         scan_interval: timedelta = DEFAULT_SCAN_INTERVAL,
+        browserless_url: str = DEFAULT_BROWSERLESS_URL,
     ) -> None:
         """Initialize the coordinator."""
         super().__init__(
@@ -40,6 +41,7 @@ class HACDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.password = password
         self.student_id = student_id
         self.quarter = quarter
+        self.browserless_url = browserless_url
         self._session: aiohttp.ClientSession | None = None
         self._client: HACClient | None = None
 
@@ -81,6 +83,7 @@ class HACDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     self.password,
                     self._session,
                     student_id=self.student_id,
+                    browserless_url=self.browserless_url,
                 )
 
             # Fetch grades for all quarters

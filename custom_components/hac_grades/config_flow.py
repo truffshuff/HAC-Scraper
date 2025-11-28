@@ -15,8 +15,10 @@ from .const import (
     CONF_SCHOOL_URL,
     CONF_STUDENT_ID,
     CONF_QUARTER,
+    CONF_BROWSERLESS_URL,
     DEFAULT_QUARTER,
     DEFAULT_SCAN_INTERVAL,
+    DEFAULT_BROWSERLESS_URL,
     DOMAIN,
     QUARTERS,
 )
@@ -30,6 +32,7 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
         vol.Required(CONF_SCHOOL_URL): str,
         vol.Required(CONF_USERNAME): str,
         vol.Required(CONF_PASSWORD): str,
+        vol.Optional(CONF_BROWSERLESS_URL, default=DEFAULT_BROWSERLESS_URL): str,
     }
 )
 
@@ -44,6 +47,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
             data[CONF_PASSWORD],
             session,
             student_id=data[CONF_STUDENT_ID],
+            browserless_url=data.get(CONF_BROWSERLESS_URL, DEFAULT_BROWSERLESS_URL),
         )
 
         # Try to login only - this is fast and validates credentials
