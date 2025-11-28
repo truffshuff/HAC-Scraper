@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Breaking Changes
 
 - **Entity IDs changed**: Entities now use student ID and quarter instead of student name
-  - Old format: `sensor.owen_gpa`
+  - Old format: `sensor.john_gpa`
   - New format: `sensor.student_12345_q2_gpa`
 - Configuration now requires **Student ID** instead of Student Name
 

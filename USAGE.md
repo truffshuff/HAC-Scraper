@@ -63,26 +63,31 @@ automation:
 ### What Happens During an Update
 
 1. **Random Delay**: 0-120 seconds (0-2 minutes) to stagger requests
-2. **Login**: Uses browserless Chrome to authenticate
-3. **Fetch Q2**: Cached from initial login (fastest)
-4. **Fetch Q1**: Separate browserless session with quarter selection
-5. **Fetch Q3**: Separate browserless session (may be empty if quarter hasn't started)
-6. **Fetch Q4**: Separate browserless session (may be empty if quarter hasn't started)
+2. **Initial Login**: First browserless session - logs in and fetches default quarter (usually Q2)
+3. **Fetch Other Quarters**: 3 additional browserless sessions (one each for Q1, Q3, Q4)
+   - Each session performs: full login → student selection → quarter selection → data fetch
+   - Q3 and Q4 may be empty if quarter hasn't started yet
+
+**Total: 4 browserless sessions per update per student**
 
 ### Performance Considerations
 
-- Each quarter fetch requires a full login + navigation sequence
-- Q2 is optimized (cached from initial login)
-- Q1, Q3, Q4 each require ~30-60 seconds
-- **Total time per student**: ~2-4 minutes
-- **With multiple students**: Staggered by 0-2 minutes each
+- Each browserless session requires a full login + navigation sequence (~30-60 seconds each)
+- The initial quarter (usually Q2) is slightly faster as it's fetched during login
+- Other quarters (Q1, Q3, Q4) each require their own complete browserless session
+- **Total time per student**: ~2-4 minutes (4 sessions × 30-60 seconds each)
+- **With multiple students**: Staggered by 0-2 minutes each to prevent overwhelming browserless
 
 ### Browserless Load
 
-With 2 students configured:
-- **Worst case**: 8 browserless sessions (2 students × 4 quarters)
-- **Best case**: 6 sessions (2 students × 3 quarters, with Q2 cached)
-- **Duration**: Spread over 0-4 minutes due to random delays
+**Per student update:**
+- 4 browserless sessions (1 initial login + 3 quarter-specific sessions)
+- Sessions run sequentially, not in parallel
+
+**With 2 students configured:**
+- 8 total browserless sessions (2 students × 4 sessions each)
+- Staggered start times help distribute the load
+- Total duration: ~4-8 minutes (depending on random delays)
 
 ## Sensors Created
 

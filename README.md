@@ -346,7 +346,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Acknowledgments
 
-Created by Dustin Houseman
+Created by TruffShuff
 
 Inspired by the need to monitor children's academic progress efficiently through Home Assistant.
 
