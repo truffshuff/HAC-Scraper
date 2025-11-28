@@ -66,19 +66,19 @@ python3 generate_dashboard.py \
 
 # Specify student display order
 python3 generate_dashboard.py \
-  --student-order "148613,170512"
+  --student-order "123456,789012"
 
 # Specify student friendly names
 python3 generate_dashboard.py \
-  --student-names "148613:Owen,170512:Emma"
+  --student-names "123456:John,789012:Jane"
 
 # Combine all options
 python3 generate_dashboard.py \
   --metadata-file /path/to/hac_entity_registry.json \
   --output /path/to/output.yaml \
   --dashboard-path dashboard-grades \
-  --student-order "170512,148613" \
-  --student-names "170512:Emma,148613:Owen"
+  --student-order "789012,123456" \
+  --student-names "789012:Jane,123456:John"
 ```
 
 ### 3. Using the Generated Dashboard
@@ -157,8 +157,8 @@ shell_command:
     python3 generate_dashboard.py
     --metadata-file custom_components/hac_grades/hac_entity_registry.json
     --output dashboards/hac_grades_generated.yaml
-    --student-order "148613,170512"
-    --student-names "148613:Owen,170512:Emma"
+    --student-order "123456,789012"
+    --student-names "123456:John,789012:Jane"
 ```
 
 ## Customization
@@ -183,7 +183,7 @@ You can customize icon mappings by editing the `get_course_icon()` function in `
 By default, students appear in the order they're found in the metadata file. To customize the display order, use the `--student-order` parameter:
 
 ```bash
-python3 generate_dashboard.py --student-order "148613,170512"
+python3 generate_dashboard.py --student-order "123456,789012"
 ```
 
 **How it works:**
@@ -196,29 +196,29 @@ python3 generate_dashboard.py --student-order "148613,170512"
 - Student IDs that don't exist in the metadata will be ignored
 - This setting must be specified each time you regenerate the dashboard
 
-**Example:** To always show Student 170512 first, then Student 148613:
+**Example:** To always show Student 789012 first, then Student 123456:
 ```bash
 python3 generate_dashboard.py \
   --metadata-file custom_components/hac_grades/hac_entity_registry.json \
   --output dashboards/hac_grades.yaml \
-  --student-order "170512,148613"
+  --student-order "789012,123456"
 ```
 
 ### Student Names
 
-By default, students are labeled as "Student 148613", etc. You can customize student names in two ways:
+By default, students are labeled as "Student 123456", etc. You can customize student names in two ways:
 
 **Method 1: Command-line parameter (Recommended)**
 
 Use the `--student-names` parameter when generating the dashboard:
 
 ```bash
-python3 generate_dashboard.py --student-names "148613:Owen,170512:Emma"
+python3 generate_dashboard.py --student-names "123456:John,789012:Jane"
 ```
 
 **How it works:**
 - Format: `StudentID:Name,StudentID:Name,...`
-- Names can contain spaces: `"148613:Owen Smith,170512:Emma Jones"`
+- Names can contain spaces: `"123456:John Smith,789012:Jane Jones"`
 - Only specify the students you want to rename
 - Student IDs that don't exist in the metadata will be ignored
 - This setting must be specified each time you regenerate the dashboard
@@ -228,8 +228,8 @@ python3 generate_dashboard.py --student-names "148613:Owen,170512:Emma"
 python3 generate_dashboard.py \
   --metadata-file custom_components/hac_grades/hac_entity_registry.json \
   --output dashboards/hac_grades.yaml \
-  --student-order "170512,148613" \
-  --student-names "170512:Emma,148613:Owen"
+  --student-order "789012,123456" \
+  --student-names "789012:Jane,123456:John"
 ```
 
 **Method 2: Edit metadata file directly**
@@ -239,9 +239,9 @@ Alternatively, you can edit the metadata file and add a `"name"` field to each s
 ```json
 {
   "students": {
-    "148613": {
-      "name": "Owen",
-      "student_id": "148613",
+    "123456": {
+      "name": "John",
+      "student_id": "123456",
       ...
     }
   }

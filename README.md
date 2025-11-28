@@ -61,7 +61,7 @@ Install via: **HACS** → **Frontend** → Search for card name
 2. Click on "Integrations"
 3. Click the three dots in the top right corner
 4. Select "Custom repositories"
-5. Add this repository URL: `https://github.com/dustinhouseman/HAC-Scraper`
+5. Add this repository URL: `https://github.com/truffshuff/HAC-Scraper`
 6. Select category: "Integration"
 7. Click "Add"
 8. Search for "HAC Grades" and install
@@ -333,7 +333,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 If you encounter issues:
 
 1. Check the [documentation](README.md)
-2. Search existing [GitHub issues](https://github.com/dustinhouseman/HAC-Scraper/issues)
+2. Search existing [GitHub issues](https://github.com/truffshuff/HAC-Scraper/issues)
 3. Create a new issue with:
    - Home Assistant version
    - Integration version
@@ -346,7 +346,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Acknowledgments
 
-Created by Dustin Houseman
+Created by TruffShuff
 
 Inspired by the need to monitor children's academic progress efficiently through Home Assistant.
 
