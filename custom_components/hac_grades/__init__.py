@@ -10,9 +10,11 @@ from .const import (
     CONF_SCHOOL_URL,
     CONF_STUDENT_ID,
     CONF_QUARTER,
+    CONF_BROWSERLESS_URL,
     DATA_COORDINATOR,
     DEFAULT_QUARTER,
     DEFAULT_SCAN_INTERVAL,
+    DEFAULT_BROWSERLESS_URL,
     DOMAIN,
 )
 from .coordinator import HACDataUpdateCoordinator
@@ -36,6 +38,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Get quarter from config, or use default
     quarter = entry.data.get(CONF_QUARTER, DEFAULT_QUARTER)
 
+    # Get browserless URL from config, or use default
+    browserless_url = entry.data.get(CONF_BROWSERLESS_URL, DEFAULT_BROWSERLESS_URL)
+
     # Create coordinator
     coordinator = HACDataUpdateCoordinator(
         hass,
@@ -45,6 +50,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         entry.data[CONF_STUDENT_ID],
         quarter,
         scan_interval,
+        browserless_url,
     )
 
     hass.data[DOMAIN][entry.entry_id] = {

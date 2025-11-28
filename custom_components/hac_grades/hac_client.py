@@ -32,6 +32,7 @@ class HACClient:
         session: aiohttp.ClientSession,
         student_id: str | None = None,
         quarter: str = "Q2",
+        browserless_url: str = "http://homeassistant.local:3000/function",
     ) -> None:
         """Initialize the HAC client."""
         self.school_url = school_url.rstrip("/")
@@ -40,6 +41,7 @@ class HACClient:
         self.session = session
         self.student_id = student_id
         self.quarter = quarter
+        self.browserless_url = browserless_url
         self._cookies = None
         self._detected_student_id = None
         self._initial_html = None  # HTML from initial browserless login
@@ -59,8 +61,6 @@ class HACClient:
             login_url = f"{self.school_url}/HomeAccess/Account/LogOn"
 
             # Use browserless Chrome to perform the login
-            # Using the Home Assistant host IP since HA runs in a container
-            browserless_url = "http://192.168.1.236:3000/function"
 
             # JavaScript function to run in the browser
             # Escape special characters in credentials for JavaScript
@@ -157,12 +157,12 @@ export default async ({{ page }}) => {{
 }};
 """
 
-            _LOGGER.debug("Sending browserless request to: %s", browserless_url)
+            _LOGGER.debug("Sending browserless request to: %s", self.browserless_url)
 
             # Execute the browser script via browserless /function endpoint
             # Allow up to 90 seconds for the full login + navigation sequence
             async with self.session.post(
-                browserless_url,
+                self.browserless_url,
                 data=browser_script,
                 headers={"Content-Type": "application/javascript"},
                 timeout=aiohttp.ClientTimeout(total=90)
@@ -238,8 +238,6 @@ export default async ({{ page }}) => {{
             # We'll use 2026 as the year since that's what appears in the HTML
             quarter_num = quarter[1]  # Extract number from "Q1", "Q2", etc.
             quarter_value = f"{quarter_num}-2026"
-
-            browserless_url = "http://192.168.1.236:3000/function"
 
             # Escape credentials
             escaped_username = self.username.replace("'", "\\'").replace('"', '\\"')
@@ -334,7 +332,7 @@ export default async ({{ page }}) => {{
 
             # Allow up to 90 seconds for the full login + quarter selection sequence
             async with self.session.post(
-                browserless_url,
+                self.browserless_url,
                 data=browser_script,
                 headers={"Content-Type": "application/javascript"},
                 timeout=aiohttp.ClientTimeout(total=90)
