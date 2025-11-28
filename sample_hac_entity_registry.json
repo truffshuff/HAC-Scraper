@@ -1,0 +1,439 @@
+{
+  "students": {
+    "789012": {
+      "student_id": "789012",
+      "quarters": {
+        "Q1": {
+          "course_count": 8,
+          "courses": [
+            {
+              "clean_name": "health_7",
+              "display_name": "Health 7",
+              "original_name": "HE000A - 1    Health 7",
+              "course_index": 0
+            },
+            {
+              "clean_name": "lang_arts_a_wri",
+              "display_name": "Lang Arts A Wri",
+              "original_name": "LA000B - 1    Lang Arts A Wri",
+              "course_index": 1
+            },
+            {
+              "clean_name": "int_lang_arts",
+              "display_name": "Int Lang Arts",
+              "original_name": "LA000B - 1    Int Lang Arts",
+              "course_index": 2
+            },
+            {
+              "clean_name": "integ_math_g7",
+              "display_name": "Integ Math G7",
+              "original_name": "MA000B - 1    Integ Math G7",
+              "course_index": 3
+            },
+            {
+              "clean_name": "chorus_7",
+              "display_name": "Chorus 7",
+              "original_name": "MU000N - 1    Chorus 7",
+              "course_index": 4
+            },
+            {
+              "clean_name": "phy_ed_alt_1_7",
+              "display_name": "Phy Ed Alt 1 7",
+              "original_name": "PE000N - 3    Phy Ed Alt 1 7",
+              "course_index": 5
+            },
+            {
+              "clean_name": "science_7",
+              "display_name": "Science 7",
+              "original_name": "SC000B - 5    Science 7",
+              "course_index": 6
+            },
+            {
+              "clean_name": "human_geo_7",
+              "display_name": "Human Geo 7",
+              "original_name": "SS000A - 4    Human Geo 7",
+              "course_index": 7
+            }
+          ]
+        },
+        "Q2": {
+          "course_count": 8,
+          "courses": [
+            {
+              "clean_name": "drama_7",
+              "display_name": "Drama 7",
+              "original_name": "DR000B - 1    Drama 7",
+              "course_index": 0
+            },
+            {
+              "clean_name": "lang_arts_a_wri",
+              "display_name": "Lang Arts A Wri",
+              "original_name": "LA000B - 1    Lang Arts A Wri",
+              "course_index": 1
+            },
+            {
+              "clean_name": "int_lang_arts",
+              "display_name": "Int Lang Arts",
+              "original_name": "LA000B - 1    Int Lang Arts",
+              "course_index": 2
+            },
+            {
+              "clean_name": "integ_math_g7",
+              "display_name": "Integ Math G7",
+              "original_name": "MA000B - 1    Integ Math G7",
+              "course_index": 3
+            },
+            {
+              "clean_name": "chorus_7",
+              "display_name": "Chorus 7",
+              "original_name": "MU000N - 1    Chorus 7",
+              "course_index": 4
+            },
+            {
+              "clean_name": "phy_ed_alt_1_7",
+              "display_name": "Phy Ed Alt 1 7",
+              "original_name": "PE000N - 3    Phy Ed Alt 1 7",
+              "course_index": 5
+            },
+            {
+              "clean_name": "science_7",
+              "display_name": "Science 7",
+              "original_name": "SC000B - 5    Science 7",
+              "course_index": 6
+            },
+            {
+              "clean_name": "human_geo_7",
+              "display_name": "Human Geo 7",
+              "original_name": "SS000A - 4    Human Geo 7",
+              "course_index": 7
+            }
+          ]
+        },
+        "Q3": {
+          "course_count": 8,
+          "courses": [
+            {
+              "clean_name": "art_7",
+              "display_name": "Art 7",
+              "original_name": "AR000C - 1    Art 7",
+              "course_index": 0
+            },
+            {
+              "clean_name": "lang_arts_a_wri",
+              "display_name": "Lang Arts A Wri",
+              "original_name": "LA000B - 1    Lang Arts A Wri",
+              "course_index": 1
+            },
+            {
+              "clean_name": "int_lang_arts",
+              "display_name": "Int Lang Arts",
+              "original_name": "LA000B - 1    Int Lang Arts",
+              "course_index": 2
+            },
+            {
+              "clean_name": "integ_math_g7",
+              "display_name": "Integ Math G7",
+              "original_name": "MA000B - 1    Integ Math G7",
+              "course_index": 3
+            },
+            {
+              "clean_name": "chorus_7",
+              "display_name": "Chorus 7",
+              "original_name": "MU000N - 1    Chorus 7",
+              "course_index": 4
+            },
+            {
+              "clean_name": "phy_ed_alt_1_7",
+              "display_name": "Phy Ed Alt 1 7",
+              "original_name": "PE000N - 3    Phy Ed Alt 1 7",
+              "course_index": 5
+            },
+            {
+              "clean_name": "science_7",
+              "display_name": "Science 7",
+              "original_name": "SC000B - 5    Science 7",
+              "course_index": 6
+            },
+            {
+              "clean_name": "human_geo_7",
+              "display_name": "Human Geo 7",
+              "original_name": "SS000A - 4    Human Geo 7",
+              "course_index": 7
+            }
+          ]
+        },
+        "Q4": {
+          "course_count": 8,
+          "courses": [
+            {
+              "clean_name": "lang_arts_a_wri",
+              "display_name": "Lang Arts A Wri",
+              "original_name": "LA000B - 1    Lang Arts A Wri",
+              "course_index": 0
+            },
+            {
+              "clean_name": "int_lang_arts",
+              "display_name": "Int Lang Arts",
+              "original_name": "LA000B - 1    Int Lang Arts",
+              "course_index": 1
+            },
+            {
+              "clean_name": "integ_math_g7",
+              "display_name": "Integ Math G7",
+              "original_name": "MA000B - 1    Integ Math G7",
+              "course_index": 2
+            },
+            {
+              "clean_name": "chorus_7",
+              "display_name": "Chorus 7",
+              "original_name": "MU000N - 1    Chorus 7",
+              "course_index": 3
+            },
+            {
+              "clean_name": "phy_ed_alt_1_7",
+              "display_name": "Phy Ed Alt 1 7",
+              "original_name": "PE000N - 3    Phy Ed Alt 1 7",
+              "course_index": 4
+            },
+            {
+              "clean_name": "science_7",
+              "display_name": "Science 7",
+              "original_name": "SC000B - 5    Science 7",
+              "course_index": 5
+            },
+            {
+              "clean_name": "human_geo_7",
+              "display_name": "Human Geo 7",
+              "original_name": "SS000A - 4    Human Geo 7",
+              "course_index": 6
+            },
+            {
+              "clean_name": "career_comp_7",
+              "display_name": "Career Comp 7",
+              "original_name": "TE000D - 1    Career Comp 7",
+              "course_index": 7
+            }
+          ]
+        }
+      }
+    },
+    "123456": {
+      "student_id": "123456",
+      "quarters": {
+        "Q1": {
+          "course_count": 8,
+          "courses": [
+            {
+              "clean_name": "fine_art_prep",
+              "display_name": "Fine Art Prep",
+              "original_name": "AR0000 - 3    Fine Art Prep",
+              "course_index": 0
+            },
+            {
+              "clean_name": "prin_bus_mgt_ent",
+              "display_name": "Prin Bus Mgt Ent",
+              "original_name": "BE0000 - 2    Prin Bus Mgt Ent",
+              "course_index": 1
+            },
+            {
+              "clean_name": "english_i",
+              "display_name": "English I",
+              "original_name": "EN0000 - 2    English I",
+              "course_index": 2
+            },
+            {
+              "clean_name": "spanish_ii",
+              "display_name": "Spanish II",
+              "original_name": "FL0000 - 2    Spanish II",
+              "course_index": 3
+            },
+            {
+              "clean_name": "geometry",
+              "display_name": "Geometry",
+              "original_name": "MA0000 - 2    Geometry",
+              "course_index": 4
+            },
+            {
+              "clean_name": "fnd_fit_phy_act",
+              "display_name": "Fnd Fit Phy Act",
+              "original_name": "PE0000 - 3    Fnd Fit Phy Act",
+              "course_index": 5
+            },
+            {
+              "clean_name": "hnr_biology",
+              "display_name": "Hnr Biology",
+              "original_name": "SC00000 - 1    Hnr Biology",
+              "course_index": 6
+            },
+            {
+              "clean_name": "us_history",
+              "display_name": "US History",
+              "original_name": "SS0000 - 7    US History",
+              "course_index": 7
+            }
+          ]
+        },
+        "Q2": {
+          "course_count": 8,
+          "courses": [
+            {
+              "clean_name": "fine_art_prep",
+              "display_name": "Fine Art Prep",
+              "original_name": "AR0000 - 3    Fine Art Prep",
+              "course_index": 0
+            },
+            {
+              "clean_name": "prin_bus_mgt_ent",
+              "display_name": "Prin Bus Mgt Ent",
+              "original_name": "BE0000 - 2    Prin Bus Mgt Ent",
+              "course_index": 1
+            },
+            {
+              "clean_name": "english_i",
+              "display_name": "English I",
+              "original_name": "EN0000 - 2    English I",
+              "course_index": 2
+            },
+            {
+              "clean_name": "spanish_ii",
+              "display_name": "Spanish II",
+              "original_name": "FL0000 - 2    Spanish II",
+              "course_index": 3
+            },
+            {
+              "clean_name": "geometry",
+              "display_name": "Geometry",
+              "original_name": "MA0000 - 2    Geometry",
+              "course_index": 4
+            },
+            {
+              "clean_name": "fnd_fit_phy_act",
+              "display_name": "Fnd Fit Phy Act",
+              "original_name": "PE0000 - 3    Fnd Fit Phy Act",
+              "course_index": 5
+            },
+            {
+              "clean_name": "hnr_biology",
+              "display_name": "Hnr Biology",
+              "original_name": "SC00000 - 1    Hnr Biology",
+              "course_index": 6
+            },
+            {
+              "clean_name": "us_history",
+              "display_name": "US History",
+              "original_name": "SS0000 - 7    US History",
+              "course_index": 7
+            }
+          ]
+        },
+        "Q3": {
+          "course_count": 8,
+          "courses": [
+            {
+              "clean_name": "fine_art_prep",
+              "display_name": "Fine Art Prep",
+              "original_name": "AR0000 - 3    Fine Art Prep",
+              "course_index": 0
+            },
+            {
+              "clean_name": "prin_bus_mgt_ent",
+              "display_name": "Prin Bus Mgt Ent",
+              "original_name": "BE0000 - 2    Prin Bus Mgt Ent",
+              "course_index": 1
+            },
+            {
+              "clean_name": "english_i",
+              "display_name": "English I",
+              "original_name": "EN0000 - 2    English I",
+              "course_index": 2
+            },
+            {
+              "clean_name": "spanish_ii",
+              "display_name": "Spanish II",
+              "original_name": "FL0000 - 2    Spanish II",
+              "course_index": 3
+            },
+            {
+              "clean_name": "health",
+              "display_name": "Health",
+              "original_name": "HE0000 - 3    Health",
+              "course_index": 4
+            },
+            {
+              "clean_name": "geometry",
+              "display_name": "Geometry",
+              "original_name": "MA0000 - 2    Geometry",
+              "course_index": 5
+            },
+            {
+              "clean_name": "hnr_biology",
+              "display_name": "Hnr Biology",
+              "original_name": "SC00000 - 1    Hnr Biology",
+              "course_index": 6
+            },
+            {
+              "clean_name": "us_history",
+              "display_name": "US History",
+              "original_name": "SS0000 - 7    US History",
+              "course_index": 7
+            }
+          ]
+        },
+        "Q4": {
+          "course_count": 8,
+          "courses": [
+            {
+              "clean_name": "fine_art_prep",
+              "display_name": "Fine Art Prep",
+              "original_name": "AR0000 - 3    Fine Art Prep",
+              "course_index": 0
+            },
+            {
+              "clean_name": "prin_bus_mgt_ent",
+              "display_name": "Prin Bus Mgt Ent",
+              "original_name": "BE0000 - 2    Prin Bus Mgt Ent",
+              "course_index": 1
+            },
+            {
+              "clean_name": "english_i",
+              "display_name": "English I",
+              "original_name": "EN0000 - 2    English I",
+              "course_index": 2
+            },
+            {
+              "clean_name": "spanish_ii",
+              "display_name": "Spanish II",
+              "original_name": "FL0000 - 2    Spanish II",
+              "course_index": 3
+            },
+            {
+              "clean_name": "health",
+              "display_name": "Health",
+              "original_name": "HE0000 - 3    Health",
+              "course_index": 4
+            },
+            {
+              "clean_name": "geometry",
+              "display_name": "Geometry",
+              "original_name": "MA0000 - 2    Geometry",
+              "course_index": 5
+            },
+            {
+              "clean_name": "hnr_biology",
+              "display_name": "Hnr Biology",
+              "original_name": "SC00000 - 1    Hnr Biology",
+              "course_index": 6
+            },
+            {
+              "clean_name": "us_history",
+              "display_name": "US History",
+              "original_name": "SS0000 - 7    US History",
+              "course_index": 7
+            }
+          ]
+        }
+      }
+    }
+  },
+  "last_updated": "2025-11-28T07:59:33.994183"
+}
