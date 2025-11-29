@@ -1,12 +1,18 @@
-# HAC Grades - Home Assistant Custom Integration
+<div align="center">
+  <img src="brands/hac_grades/logo.png" alt="HAC Grades Logo" width="200"/>
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/custom-components/hacs)
-![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
+  # HAC Grades - Home Assistant Custom Integration
 
-A Home Assistant custom integration that fetches student grades from Home Access Center (HAC) and creates dynamic sensors for monitoring academic performance.
+  [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/custom-components/hacs)
+  ![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)
+  ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
-## Features
+  **A Home Assistant custom integration that fetches student grades from Home Access Center (HAC) and creates dynamic sensors for monitoring academic performance.**
+</div>
+
+---
+
+## ✨ Features
 
 - 🔐 **Secure Configuration** - Credentials stored securely via Home Assistant config flow
 - 📊 **Dynamic Entity Creation** - Automatically creates sensors for all courses
@@ -16,7 +22,7 @@ A Home Assistant custom integration that fetches student grades from Home Access
 - 👥 **Multi-Student Support** - Add multiple accounts for different students
 - 📈 **Rich Data** - Assignment details, category breakdowns, GPA calculations
 
-## Prerequisites
+## 📋 Prerequisites
 
 ### Required: Browserless Chrome
 
@@ -53,7 +59,7 @@ For enhanced dashboards, install these HACS frontend cards:
 
 Install via: **HACS** → **Frontend** → Search for card name
 
-## Installation
+## 📦 Installation
 
 ### HACS (Recommended)
 
@@ -85,9 +91,9 @@ Install via: **HACS** → **Frontend** → Search for card name
    - **Password**: Your HAC password
    - **Browserless URL** (optional): URL to your browserless instance (defaults to `http://homeassistant.local:3000/function`)
 
-## Entities Created
+## 🎯 Entities Created
 
-### Overall Sensors
+### 📊 Overall Sensors
 
 For each configured student/quarter combination, the integration creates:
 
@@ -105,7 +111,7 @@ For each configured student/quarter combination, the integration creates:
 - `sensor.student_12345_q2_max_grade`
 - `binary_sensor.student_12345_q2_any_missing_assignments`
 
-### Per-Course Sensors
+### 📚 Per-Course Sensors
 
 For each course, the integration creates:
 
@@ -126,7 +132,7 @@ For each course, the integration creates:
 - `sensor.student_12345_q2_biology_practice_score`
 - `binary_sensor.student_12345_q2_biology_has_missing_assignments`
 
-## Example Dashboard
+## 📱 Example Dashboard
 
 Here's a basic Lovelace dashboard example:
 
@@ -173,7 +179,7 @@ cards:
         **Total SBF:** {{ state_attr('binary_sensor.hac_student_missing_assignments_alert', 'total_sbf') }}
 ```
 
-## Assignment Status Codes
+## 📝 Assignment Status Codes
 
 - **Scored** - Assignment has been graded
 - **NHI** - Not Handed In
@@ -182,7 +188,7 @@ cards:
 - **SBF** - Score Below Fifty
 - **EXEMPT** - Excused/Exempt assignment
 
-## Category Weighting
+## ⚖️ Category Weighting
 
 The integration calculates grades using standard HAC category weights:
 
@@ -190,7 +196,7 @@ The integration calculates grades using standard HAC category weights:
 - **Process**: 30%
 - **Product**: 50%
 
-## Automation Examples
+## 🤖 Automation Examples
 
 ### Notify on New Missing Assignment
 
@@ -248,14 +254,14 @@ automation:
             Biology grade has fallen to {{ states('sensor.biology_grade') }}%
 ```
 
-## Configuration Options
+## ⚙️ Configuration Options
 
 After installation, you can configure:
 
 - **Update Interval** - How often to poll HAC (1-24 hours, default: 6 hours)
 - **Force Refresh** - Manually trigger grade updates via button entity
 
-## Multiple Students and Quarters
+## 👨‍👩‍👧‍👦 Multiple Students and Quarters
 
 The integration supports tracking multiple students and multiple quarters:
 
@@ -277,7 +283,7 @@ This lets you track historical quarters or compare current vs previous quarters.
 - Student 12345, Q1: `sensor.student_12345_q1_gpa`
 - Student 67890, Q2: `sensor.student_67890_q2_gpa`
 
-## Advanced Features
+## 🚀 Advanced Features
 
 ### Dynamic Dashboard Generation
 
@@ -287,7 +293,7 @@ This integration includes a powerful dashboard generation system that automatica
 
 Each student configuration includes a Force Refresh button entity for on-demand grade updates. See [USAGE.md](USAGE.md) for more information.
 
-## Documentation
+## 📖 Documentation
 
 - [Installation Guide](INSTALLATION.md) - Detailed installation instructions
 - [Usage Guide](USAGE.md) - How to use the integration
@@ -295,7 +301,7 @@ Each student configuration includes a Force Refresh button entity for on-demand 
 - [Quick Start](QUICKSTART.md) - Get started quickly with dashboards
 - [Changelog](CHANGELOG.md) - Version history
 
-## Troubleshooting
+## 🔧 Troubleshooting
 
 ### Common Issues
 
@@ -316,7 +322,7 @@ Each student configuration includes a Force Refresh button entity for on-demand 
 
 For more detailed troubleshooting, see [INSTALLATION.md](INSTALLATION.md).
 
-## Contributing
+## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
@@ -328,7 +334,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 4. Test thoroughly
 5. Submit a pull request
 
-## Support
+## 💬 Support
 
 If you encounter issues:
 
@@ -340,16 +346,16 @@ If you encounter issues:
    - Error logs (redact personal information)
    - Steps to reproduce
 
-## License
+## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Acknowledgments
+## 🙏 Acknowledgments
 
 Created by TruffShuff
 
 Inspired by the need to monitor children's academic progress efficiently through Home Assistant.
 
-## Disclaimer
+## ⚠️ Disclaimer
 
 This integration is not affiliated with or endorsed by Home Access Center or any school district. Use at your own risk. Always verify grade information directly with your school's official HAC portal.
