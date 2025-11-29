@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2025-11-29
+
+### Fixed
+
+- **Browserless Connection Retry**: Added exponential backoff retry logic (12 attempts with delays up to 5 minutes) to handle cases where browserless service is not ready during Home Assistant startup or reboot. This fixes the issue where the integration would fail to start properly when HA reboots before browserless is fully initialized. The integration will now automatically retry connection attempts for up to ~20 minutes and wait for browserless to become available instead of requiring manual reload.
+- **Browserless Health Check**: Added health check before attempting login to avoid unnecessary timeout errors when browserless is not yet ready.
+- **Sensor Platform Timeout**: Increased sensor platform initialization timeout from 4 minutes to 15 minutes to accommodate very slow browserless startup times on some systems. This prevents the "Coordinator data still not available" error that occurred when browserless took longer than expected to start.
+- **Reduced Stagger Delay**: Reduced initial random delay from 2 minutes to 30 seconds to speed up login when browserless is ready.
+
 ## [0.2.0] - 2025-01-28
 
 ### Breaking Changes

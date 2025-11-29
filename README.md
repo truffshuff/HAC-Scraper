@@ -4,7 +4,7 @@
   # HAC Grades - Home Assistant Custom Integration
 
   [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/custom-components/hacs)
-  ![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)
+  ![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)
   ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
   **A Home Assistant custom integration that fetches student grades from Home Access Center (HAC) and creates dynamic sensors for monitoring academic performance.**
@@ -319,6 +319,14 @@ Each student configuration includes a Force Refresh button entity for on-demand 
 - Check the update interval in integration options
 - Manually trigger an update via the Force Refresh button
 - Verify HAC is accessible and not under maintenance
+
+**Integration Fails After Reboot**
+- The integration now automatically retries connection to browserless with exponential backoff
+- It will wait up to ~20 minutes for browserless to become available
+- **IMPORTANT**: Ensure browserless is configured to "Start on boot" if using HA add-on
+- If browserless takes longer than 5 minutes to start, check its logs for errors
+- Verify port 3000 is accessible and not blocked by firewall
+- After browserless becomes available, the integration will automatically connect - no manual reload needed
 
 For more detailed troubleshooting, see [INSTALLATION.md](INSTALLATION.md).
 

@@ -47,27 +47,55 @@ class HACClient:
         self._initial_html = None  # HTML from initial browserless login
         self._initial_quarter = None  # Which quarter the initial HTML represents
 
+    async def _check_browserless_ready(self) -> bool:
+        """Check if browserless is ready to accept requests."""
+        try:
+            # Try to hit the browserless health endpoint or root
+            health_url = self.browserless_url.replace("/function", "/")
+            async with self.session.get(health_url, timeout=aiohttp.ClientTimeout(total=5)) as response:
+                return response.status in [200, 404]  # 404 is ok, means server is up
+        except Exception:
+            return False
+
     async def login(self) -> bool:
         """Login to HAC using browserless Chrome and extract cookies."""
-        try:
-            # Add a random delay to stagger requests when multiple students
-            # are configured (prevents overwhelming browserless)
-            # Delay up to 2 minutes to spread out the load
-            import random
-            delay = random.uniform(0, 120)
-            _LOGGER.debug("Waiting %.1f seconds before login to stagger requests", delay)
-            await asyncio.sleep(delay)
+        # Retry configuration for browserless connection
+        # Extended retry schedule to handle slow browserless startup during system boot
+        max_retries = 12
+        retry_delays = [10, 15, 20, 30, 45, 60, 90, 120, 150, 180, 240, 300]  # Up to 5 min final wait
 
-            login_url = f"{self.school_url}/HomeAccess/Account/LogOn"
+        for attempt in range(max_retries):
+            try:
+                # Check if browserless is ready before attempting login
+                if attempt > 0 and not await self._check_browserless_ready():
+                    retry_delay = retry_delays[attempt] if attempt < len(retry_delays) else 300
+                    _LOGGER.info(
+                        "Browserless not ready yet (attempt %d/%d). "
+                        "Waiting %d seconds before next check...",
+                        attempt + 1, max_retries, retry_delay
+                    )
+                    await asyncio.sleep(retry_delay)
+                    continue
 
-            # Use browserless Chrome to perform the login
+                # Add a random delay to stagger requests when multiple students
+                # are configured (prevents overwhelming browserless)
+                # Only apply stagger delay on first attempt
+                if attempt == 0:
+                    import random
+                    delay = random.uniform(0, 30)  # Reduced from 120s to 30s
+                    _LOGGER.debug("Waiting %.1f seconds before login to stagger requests", delay)
+                    await asyncio.sleep(delay)
 
-            # JavaScript function to run in the browser
-            # Escape special characters in credentials for JavaScript
-            escaped_username = self.username.replace("'", "\\'").replace('"', '\\"')
-            escaped_password = self.password.replace("'", "\\'").replace('"', '\\"')
+                login_url = f"{self.school_url}/HomeAccess/Account/LogOn"
 
-            browser_script = f"""
+                # Use browserless Chrome to perform the login
+
+                # JavaScript function to run in the browser
+                # Escape special characters in credentials for JavaScript
+                escaped_username = self.username.replace("'", "\\'").replace('"', '\\"')
+                escaped_password = self.password.replace("'", "\\'").replace('"', '\\"')
+
+                browser_script = f"""
 export default async ({{ page }}) => {{
     try {{
         // Navigate to login page
@@ -157,79 +185,120 @@ export default async ({{ page }}) => {{
 }};
 """
 
-            _LOGGER.debug("Sending browserless request to: %s", self.browserless_url)
+                _LOGGER.debug("Sending browserless request to: %s (attempt %d/%d)",
+                             self.browserless_url, attempt + 1, max_retries)
 
-            # Execute the browser script via browserless /function endpoint
-            # Allow up to 90 seconds for the full login + navigation sequence
-            async with self.session.post(
-                self.browserless_url,
-                data=browser_script,
-                headers={"Content-Type": "application/javascript"},
-                timeout=aiohttp.ClientTimeout(total=90)
-            ) as response:
-                if response.status != 200:
-                    _LOGGER.error("Browserless request failed with status: %s", response.status)
-                    return False
+                # Execute the browser script via browserless /function endpoint
+                # Allow up to 90 seconds for the full login + navigation sequence
+                async with self.session.post(
+                    self.browserless_url,
+                    data=browser_script,
+                    headers={"Content-Type": "application/javascript"},
+                    timeout=aiohttp.ClientTimeout(total=90)
+                ) as response:
+                    if response.status != 200:
+                        _LOGGER.error("Browserless request failed with status: %s", response.status)
+                        return False
 
-                result = await response.json()
+                    result = await response.json()
 
-                if "error" in result:
-                    _LOGGER.error("Browser automation error: %s", result["error"])
-                    return False
+                    if "error" in result:
+                        _LOGGER.error("Browser automation error: %s", result["error"])
+                        return False
 
-                final_url = result.get("url", "")
-                cookies = result.get("cookies", [])
-                initial_html = result.get("html", "")
-                selected_student_id = result.get("selectedStudentId")
+                    final_url = result.get("url", "")
+                    cookies = result.get("cookies", [])
+                    initial_html = result.get("html", "")
+                    selected_student_id = result.get("selectedStudentId")
 
-                _LOGGER.debug("Browser login completed, final URL: %s", final_url)
-                _LOGGER.debug("Received %d cookies", len(cookies))
-                _LOGGER.debug("Received HTML content: %d characters", len(initial_html))
-                _LOGGER.info("Login for student ID: %s (requested) / %s (selected)",
-                            self.student_id, selected_student_id)
+                    _LOGGER.debug("Browser login completed, final URL: %s", final_url)
+                    _LOGGER.debug("Received %d cookies", len(cookies))
+                    _LOGGER.debug("Received HTML content: %d characters", len(initial_html))
+                    _LOGGER.info("Login for student ID: %s (requested) / %s (selected)",
+                                self.student_id, selected_student_id)
 
-                # Check if we landed on an error page
-                if "/Error" in final_url:
-                    _LOGGER.error("Login failed - redirected to error page: %s", final_url)
-                    return False
+                    # Check if we landed on an error page
+                    if "/Error" in final_url:
+                        _LOGGER.error("Login failed - redirected to error page: %s", final_url)
+                        return False
 
-                # Check if we're still on the login page
-                if "/LogOn" in final_url:
-                    _LOGGER.error("Login failed - still on login page (invalid credentials)")
-                    return False
+                    # Check if we're still on the login page
+                    if "/LogOn" in final_url:
+                        _LOGGER.error("Login failed - still on login page (invalid credentials)")
+                        return False
 
-                # Success if we reached any authenticated page (not login/error)
-                # The assignments page navigation in the script should have succeeded
-                _LOGGER.info("Login successful, landed on: %s", final_url)
+                    # Success if we reached any authenticated page (not login/error)
+                    # The assignments page navigation in the script should have succeeded
+                    _LOGGER.info("Login successful, landed on: %s", final_url)
 
-                # Import cookies into our aiohttp session
-                # Create a simple cookie dict for the session
-                for cookie in cookies:
-                    self.session.cookie_jar.update_cookies(
-                        {cookie["name"]: cookie["value"]},
-                        response.url
+                    # Import cookies into our aiohttp session
+                    # Create a simple cookie dict for the session
+                    for cookie in cookies:
+                        self.session.cookie_jar.update_cookies(
+                            {cookie["name"]: cookie["value"]},
+                            response.url
+                        )
+
+                    self._cookies = self.session.cookie_jar
+                    # Store the initial HTML and detect which quarter it represents
+                    self._initial_html = initial_html
+                    self._initial_quarter = self._detect_quarter_from_html(initial_html)
+
+                    # Store the detected student ID from the browser script
+                    if selected_student_id:
+                        self._detected_student_id = selected_student_id
+                        _LOGGER.info("Detected student ID from banner: %s", selected_student_id)
+
+                    _LOGGER.info(
+                        "Successfully logged in to HAC using browserless (cookies: %d, initial quarter: %s)",
+                        len(cookies),
+                        self._initial_quarter or "unknown"
                     )
+                    return True
 
-                self._cookies = self.session.cookie_jar
-                # Store the initial HTML and detect which quarter it represents
-                self._initial_html = initial_html
-                self._initial_quarter = self._detect_quarter_from_html(initial_html)
+            except aiohttp.ClientConnectorError as err:
+                # Connection error - browserless might not be ready yet
+                if attempt < max_retries - 1:
+                    retry_delay = retry_delays[attempt]
+                    _LOGGER.warning(
+                        "Cannot connect to browserless (attempt %d/%d): %s. "
+                        "Retrying in %d seconds...",
+                        attempt + 1, max_retries, err, retry_delay
+                    )
+                    await asyncio.sleep(retry_delay)
+                    continue
+                else:
+                    _LOGGER.error(
+                        "Failed to connect to browserless after %d attempts: %s",
+                        max_retries, err
+                    )
+                    return False
 
-                # Store the detected student ID from the browser script
-                if selected_student_id:
-                    self._detected_student_id = selected_student_id
-                    _LOGGER.info("Detected student ID from banner: %s", selected_student_id)
+            except asyncio.TimeoutError as err:
+                # Timeout error - might also be a browserless startup issue
+                if attempt < max_retries - 1:
+                    retry_delay = retry_delays[attempt]
+                    _LOGGER.warning(
+                        "Browserless request timed out (attempt %d/%d). "
+                        "Retrying in %d seconds...",
+                        attempt + 1, max_retries, retry_delay
+                    )
+                    await asyncio.sleep(retry_delay)
+                    continue
+                else:
+                    _LOGGER.error(
+                        "Browserless request timed out after %d attempts",
+                        max_retries
+                    )
+                    return False
 
-                _LOGGER.info(
-                    "Successfully logged in to HAC using browserless (cookies: %d, initial quarter: %s)",
-                    len(cookies),
-                    self._initial_quarter or "unknown"
-                )
-                return True
+            except Exception as err:
+                # Other errors should not be retried (e.g., invalid credentials)
+                _LOGGER.error("Error during browserless login: %s", err, exc_info=True)
+                return False
 
-        except Exception as err:
-            _LOGGER.error("Error during browserless login: %s", err, exc_info=True)
-            return False
+        # If we exhausted all retries without success
+        return False
 
     async def _fetch_quarter_with_browserless(self, quarter: str) -> str | None:
         """Fetch a specific quarter's HTML using browserless to change the dropdown."""
