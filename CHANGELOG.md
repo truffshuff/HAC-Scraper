@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2025-11-29
+
+### Fixed
+
+- **Async Initialization**: Fixed improper use of `async_config_entry_first_refresh()` which caused deprecation warning. Entity creation now properly waits for coordinator data using polling mechanism that runs in background task.
+- **JSON Metadata Corruption**: Fixed race condition where sensor.py and binary_sensor.py were writing to the same metadata file simultaneously, causing JSON corruption. Added error recovery (auto-delete corrupted file) and 2-second delay between writes to prevent conflicts.
+- **Optimized Retry Timing**: Faster initial retry attempts (5s, 10s, 15s) with exponential backoff for later attempts. Reduced stagger delay from 30s to 5s to minimize startup time while still preventing overwhelming browserless with simultaneous requests.
+
 ## [0.3.0] - 2025-11-29
 
 ### Fixed
