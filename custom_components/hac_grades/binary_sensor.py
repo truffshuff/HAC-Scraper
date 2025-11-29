@@ -1,4 +1,5 @@
 """Binary sensor platform for HAC Grades."""
+import asyncio
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
@@ -52,7 +53,17 @@ async def _update_entity_metadata_with_binary_sensors(
             with open(metadata_file, "r") as f:
                 return json.load(f)
 
-        metadata = await hass.async_add_executor_job(_load_metadata)
+        try:
+            metadata = await hass.async_add_executor_job(_load_metadata)
+        except (json.JSONDecodeError, IOError) as err:
+            _LOGGER.warning("Could not load metadata file (may be corrupted): %s. Skipping binary sensor metadata update.", err)
+            # If file is corrupted, try to delete it
+            try:
+                await hass.async_add_executor_job(metadata_file.unlink, True)  # missing_ok=True
+                _LOGGER.info("Deleted corrupted metadata file")
+            except Exception as delete_err:
+                _LOGGER.error("Could not delete corrupted metadata file: %s", delete_err)
+            return
 
         # Update student metadata with binary sensor info
         if "students" in metadata and student_id in metadata["students"]:
@@ -193,7 +204,12 @@ async def async_setup_entry(
     async_add_entities(entities)
 
     # Update metadata with binary sensor information (async)
-    await _update_entity_metadata_with_binary_sensors(hass, student_id)
+    # Add a small delay to avoid race condition with sensor.py writing the same file
+    async def _delayed_metadata_update():
+        await asyncio.sleep(2)  # Wait 2 seconds for sensor.py to finish writing
+        await _update_entity_metadata_with_binary_sensors(hass, student_id)
+
+    hass.async_create_task(_delayed_metadata_update())
 
 
 class HACOverallBinarySensor(CoordinatorEntity[HACDataUpdateCoordinator], BinarySensorEntity):

@@ -74,7 +74,13 @@ async def _write_entity_metadata(
                         return json.load(f)
                 existing_metadata = await hass.async_add_executor_job(_load_metadata)
             except (json.JSONDecodeError, IOError) as err:
-                _LOGGER.warning("Could not load existing metadata file: %s", err)
+                _LOGGER.warning("Could not load existing metadata file (may be corrupted): %s. Starting fresh.", err)
+                # If file is corrupted, delete it and start fresh
+                try:
+                    await hass.async_add_executor_job(metadata_file.unlink, True)  # missing_ok=True
+                    _LOGGER.info("Deleted corrupted metadata file, will create new one")
+                except Exception as delete_err:
+                    _LOGGER.error("Could not delete corrupted metadata file: %s", delete_err)
 
         # Build student metadata
         student_metadata = {
@@ -852,31 +858,35 @@ async def async_setup_entry(
 
     async def _create_entities_when_ready() -> None:
         """Wait for data and create entities in the background."""
-        # Wait for data to be available before creating sensors
+        # If data is not yet available, wait for the coordinator to have data
+        # This happens asynchronously and doesn't block HA bootstrap
         if not coordinator.data:
-            _LOGGER.info("Waiting for initial data fetch to complete (this may take up to 15 minutes during startup)...")
-            # Wait up to 15 minutes for the data to become available
-            # This accounts for very slow browserless startup times during system boot
-            for i in range(180):  # 180 * 5 seconds = 15 minutes
-                await asyncio.sleep(5)
-                if coordinator.data:
-                    _LOGGER.info("Data became available after %d seconds", (i + 1) * 5)
-                    break
+            _LOGGER.info(
+                "Initial data not yet available - waiting for coordinator to fetch data. "
+                "This is normal during Home Assistant startup when browserless is still initializing."
+            )
+            # Wait for data to become available by polling the coordinator
+            # The coordinator is already refreshing in the background
+            max_wait_seconds = 900  # 15 minutes max wait
+            poll_interval = 5  # Check every 5 seconds
 
-            if not coordinator.data:
+            for _ in range(max_wait_seconds // poll_interval):
+                await asyncio.sleep(poll_interval)
+                if coordinator.data:
+                    _LOGGER.info("Coordinator data became available, creating entities")
+                    break
+            else:
                 _LOGGER.error(
-                    "Coordinator data still not available after waiting 15 minutes. "
-                    "Cannot create sensors. Check that browserless is running and accessible at %s. "
-                    "Verify browserless is configured to 'Start on boot' if using HA add-on. "
-                    "Try reloading the integration once browserless is available.",
-                    coordinator.browserless_url
+                    "Coordinator data still not available after %d seconds. "
+                    "Entities may not be created correctly.",
+                    max_wait_seconds
                 )
-                return
 
         # Now create all sensors based on available data
         entities: list[SensorEntity] = []
 
-        all_quarters_data = coordinator.data.get("all_quarters", {})
+        # Handle case where data is still not available after refresh attempt
+        all_quarters_data = coordinator.data.get("all_quarters", {}) if coordinator.data else {}
         quarters_available = list(all_quarters_data.keys())
 
         _LOGGER.info("Creating sensors for %d quarters: %s", len(quarters_available), quarters_available)

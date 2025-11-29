@@ -62,27 +62,28 @@ class HACClient:
         # Retry configuration for browserless connection
         # Extended retry schedule to handle slow browserless startup during system boot
         max_retries = 12
-        retry_delays = [10, 15, 20, 30, 45, 60, 90, 120, 150, 180, 240, 300]  # Up to 5 min final wait
+        retry_delays = [5, 10, 15, 20, 30, 45, 60, 90, 120, 150, 180, 240]  # Faster initial retries
 
         for attempt in range(max_retries):
             try:
-                # Check if browserless is ready before attempting login
-                if attempt > 0 and not await self._check_browserless_ready():
-                    retry_delay = retry_delays[attempt] if attempt < len(retry_delays) else 300
-                    _LOGGER.info(
-                        "Browserless not ready yet (attempt %d/%d). "
-                        "Waiting %d seconds before next check...",
-                        attempt + 1, max_retries, retry_delay
-                    )
-                    await asyncio.sleep(retry_delay)
-                    continue
+                # Check if browserless is ready before attempting login (skip on first attempt to be fast)
+                if attempt > 0:
+                    if not await self._check_browserless_ready():
+                        retry_delay = retry_delays[attempt] if attempt < len(retry_delays) else 240
+                        _LOGGER.info(
+                            "Browserless not ready yet (attempt %d/%d). "
+                            "Waiting %d seconds before next check...",
+                            attempt + 1, max_retries, retry_delay
+                        )
+                        await asyncio.sleep(retry_delay)
+                        continue
 
-                # Add a random delay to stagger requests when multiple students
+                # Add a small random delay to stagger requests when multiple students
                 # are configured (prevents overwhelming browserless)
-                # Only apply stagger delay on first attempt
+                # Only apply stagger delay on first attempt, and keep it very short
                 if attempt == 0:
                     import random
-                    delay = random.uniform(0, 30)  # Reduced from 120s to 30s
+                    delay = random.uniform(0, 5)  # Very short stagger to reduce blocking
                     _LOGGER.debug("Waiting %.1f seconds before login to stagger requests", delay)
                     await asyncio.sleep(delay)
 
