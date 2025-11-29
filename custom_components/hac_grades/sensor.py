@@ -854,9 +854,10 @@ async def async_setup_entry(
         """Wait for data and create entities in the background."""
         # Wait for data to be available before creating sensors
         if not coordinator.data:
-            _LOGGER.info("Waiting for initial data fetch to complete (this may take up to 4 minutes)...")
-            # Wait up to 4 minutes for the data to become available
-            for i in range(48):  # 48 * 5 seconds = 4 minutes
+            _LOGGER.info("Waiting for initial data fetch to complete (this may take up to 15 minutes during startup)...")
+            # Wait up to 15 minutes for the data to become available
+            # This accounts for very slow browserless startup times during system boot
+            for i in range(180):  # 180 * 5 seconds = 15 minutes
                 await asyncio.sleep(5)
                 if coordinator.data:
                     _LOGGER.info("Data became available after %d seconds", (i + 1) * 5)
@@ -864,8 +865,11 @@ async def async_setup_entry(
 
             if not coordinator.data:
                 _LOGGER.error(
-                    "Coordinator data still not available after waiting 4 minutes. "
-                    "Cannot create sensors. Try reloading the integration."
+                    "Coordinator data still not available after waiting 15 minutes. "
+                    "Cannot create sensors. Check that browserless is running and accessible at %s. "
+                    "Verify browserless is configured to 'Start on boot' if using HA add-on. "
+                    "Try reloading the integration once browserless is available.",
+                    coordinator.browserless_url
                 )
                 return
 
