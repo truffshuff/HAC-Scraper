@@ -21,7 +21,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
 
-from .const import CONF_STUDENT_ID, CONF_QUARTER, DATA_COORDINATOR, DOMAIN
+from .const import CONF_STUDENT_ID, CONF_QUARTER, DATA_COORDINATOR, DOMAIN, METADATA_FILE_LOCK
 from .coordinator import HACDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -65,66 +65,69 @@ async def _write_entity_metadata(
         integration_dir = Path(__file__).parent
         metadata_file = integration_dir / "hac_entity_registry.json"
 
-        # Load existing metadata if it exists
-        existing_metadata = {}
-        if await hass.async_add_executor_job(metadata_file.exists):
-            try:
-                def _load_metadata():
-                    with open(metadata_file, "r") as f:
-                        return json.load(f)
-                existing_metadata = await hass.async_add_executor_job(_load_metadata)
-            except (json.JSONDecodeError, IOError) as err:
-                _LOGGER.warning("Could not load existing metadata file (may be corrupted): %s. Starting fresh.", err)
-                # If file is corrupted, delete it and start fresh
+        # Serialize with binary_sensor.py's reader/writer to avoid corrupting the file
+        # when multiple students' platforms update it concurrently
+        async with METADATA_FILE_LOCK:
+            # Load existing metadata if it exists
+            existing_metadata = {}
+            if await hass.async_add_executor_job(metadata_file.exists):
                 try:
-                    await hass.async_add_executor_job(metadata_file.unlink, True)  # missing_ok=True
-                    _LOGGER.info("Deleted corrupted metadata file, will create new one")
-                except Exception as delete_err:
-                    _LOGGER.error("Could not delete corrupted metadata file: %s", delete_err)
+                    def _load_metadata():
+                        with open(metadata_file, "r") as f:
+                            return json.load(f)
+                    existing_metadata = await hass.async_add_executor_job(_load_metadata)
+                except (json.JSONDecodeError, IOError) as err:
+                    _LOGGER.warning("Could not load existing metadata file (may be corrupted): %s. Starting fresh.", err)
+                    # If file is corrupted, delete it and start fresh
+                    try:
+                        await hass.async_add_executor_job(metadata_file.unlink, True)  # missing_ok=True
+                        _LOGGER.info("Deleted corrupted metadata file, will create new one")
+                    except Exception as delete_err:
+                        _LOGGER.error("Could not delete corrupted metadata file: %s", delete_err)
 
-        # Build student metadata
-        student_metadata = {
-            "student_id": student_id,
-            "quarters": {},
-        }
-
-        for quarter, quarter_data in all_quarters_data.items():
-            courses = quarter_data.get("courses", [])
-
-            course_list = []
-            for course in courses:
-                course_name = course.get("course", "")
-                clean_name = _clean_course_name(course_name)
-
-                # Apply same cleaning logic as entity creation
-                clean_course_name = clean_name.lower().replace(" ", "_")
-                clean_course_name = "".join(c for c in clean_course_name if c.isalnum() or c == "_")
-
-                course_list.append({
-                    "clean_name": clean_course_name,
-                    "display_name": clean_name,
-                    "original_name": course_name,
-                    "course_index": course.get("course_index"),
-                })
-
-            student_metadata["quarters"][quarter] = {
-                "course_count": len(courses),
-                "courses": course_list,
+            # Build student metadata
+            student_metadata = {
+                "student_id": student_id,
+                "quarters": {},
             }
 
-        # Update the metadata structure
-        if "students" not in existing_metadata:
-            existing_metadata["students"] = {}
+            for quarter, quarter_data in all_quarters_data.items():
+                courses = quarter_data.get("courses", [])
 
-        existing_metadata["students"][student_id] = student_metadata
-        existing_metadata["last_updated"] = datetime.now().isoformat()
+                course_list = []
+                for course in courses:
+                    course_name = course.get("course", "")
+                    clean_name = _clean_course_name(course_name)
 
-        # Write the metadata file (async)
-        def _write_metadata():
-            with open(metadata_file, "w") as f:
-                json.dump(existing_metadata, f, indent=2)
+                    # Apply same cleaning logic as entity creation
+                    clean_course_name = clean_name.lower().replace(" ", "_")
+                    clean_course_name = "".join(c for c in clean_course_name if c.isalnum() or c == "_")
 
-        await hass.async_add_executor_job(_write_metadata)
+                    course_list.append({
+                        "clean_name": clean_course_name,
+                        "display_name": clean_name,
+                        "original_name": course_name,
+                        "course_index": course.get("course_index"),
+                    })
+
+                student_metadata["quarters"][quarter] = {
+                    "course_count": len(courses),
+                    "courses": course_list,
+                }
+
+            # Update the metadata structure
+            if "students" not in existing_metadata:
+                existing_metadata["students"] = {}
+
+            existing_metadata["students"][student_id] = student_metadata
+            existing_metadata["last_updated"] = datetime.now().isoformat()
+
+            # Write the metadata file (async)
+            def _write_metadata():
+                with open(metadata_file, "w") as f:
+                    json.dump(existing_metadata, f, indent=2)
+
+            await hass.async_add_executor_job(_write_metadata)
 
         _LOGGER.info(
             "Wrote entity metadata to %s for student %s with %d quarters",

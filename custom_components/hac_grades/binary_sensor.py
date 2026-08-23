@@ -1,5 +1,4 @@
 """Binary sensor platform for HAC Grades."""
-import asyncio
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
@@ -19,7 +18,7 @@ from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import CONF_STUDENT_ID, CONF_QUARTER, DATA_COORDINATOR, DOMAIN
+from .const import CONF_STUDENT_ID, CONF_QUARTER, DATA_COORDINATOR, DOMAIN, METADATA_FILE_LOCK
 from .coordinator import HACDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -41,46 +40,49 @@ async def _update_entity_metadata_with_binary_sensors(
         integration_dir = Path(__file__).parent
         metadata_file = integration_dir / "hac_entity_registry.json"
 
-        # Load existing metadata (async)
-        if not await hass.async_add_executor_job(metadata_file.exists):
-            _LOGGER.debug(
-                "Metadata file does not exist yet, binary sensor info will be "
-                "added when sensors create it"
-            )
-            return
+        # Serialize with sensor.py's reader/writer to avoid corrupting the file
+        # when multiple students' platforms update it concurrently
+        async with METADATA_FILE_LOCK:
+            # Load existing metadata (async)
+            if not await hass.async_add_executor_job(metadata_file.exists):
+                _LOGGER.debug(
+                    "Metadata file does not exist yet, binary sensor info will be "
+                    "added when sensors create it"
+                )
+                return
 
-        def _load_metadata():
-            with open(metadata_file, "r") as f:
-                return json.load(f)
+            def _load_metadata():
+                with open(metadata_file, "r") as f:
+                    return json.load(f)
 
-        try:
-            metadata = await hass.async_add_executor_job(_load_metadata)
-        except (json.JSONDecodeError, IOError) as err:
-            _LOGGER.warning("Could not load metadata file (may be corrupted): %s. Skipping binary sensor metadata update.", err)
-            # If file is corrupted, try to delete it
             try:
-                await hass.async_add_executor_job(metadata_file.unlink, True)  # missing_ok=True
-                _LOGGER.info("Deleted corrupted metadata file")
-            except Exception as delete_err:
-                _LOGGER.error("Could not delete corrupted metadata file: %s", delete_err)
-            return
+                metadata = await hass.async_add_executor_job(_load_metadata)
+            except (json.JSONDecodeError, IOError) as err:
+                _LOGGER.warning("Could not load metadata file (may be corrupted): %s. Skipping binary sensor metadata update.", err)
+                # If file is corrupted, try to delete it
+                try:
+                    await hass.async_add_executor_job(metadata_file.unlink, True)  # missing_ok=True
+                    _LOGGER.info("Deleted corrupted metadata file")
+                except Exception as delete_err:
+                    _LOGGER.error("Could not delete corrupted metadata file: %s", delete_err)
+                return
 
-        # Update student metadata with binary sensor info
-        if "students" in metadata and student_id in metadata["students"]:
-            metadata["students"][student_id]["has_binary_sensors"] = True
-            metadata["students"][student_id]["binary_sensor_types"] = [
-                desc.key for desc in OVERALL_BINARY_SENSORS + COURSE_BINARY_SENSORS
-            ]
-            metadata["last_updated"] = datetime.now().isoformat()
+            # Update student metadata with binary sensor info
+            if "students" in metadata and student_id in metadata["students"]:
+                metadata["students"][student_id]["has_binary_sensors"] = True
+                metadata["students"][student_id]["binary_sensor_types"] = [
+                    desc.key for desc in OVERALL_BINARY_SENSORS + COURSE_BINARY_SENSORS
+                ]
+                metadata["last_updated"] = datetime.now().isoformat()
 
-            # Write back (async)
-            def _write_metadata():
-                with open(metadata_file, "w") as f:
-                    json.dump(metadata, f, indent=2)
+                # Write back (async)
+                def _write_metadata():
+                    with open(metadata_file, "w") as f:
+                        json.dump(metadata, f, indent=2)
 
-            await hass.async_add_executor_job(_write_metadata)
+                await hass.async_add_executor_job(_write_metadata)
 
-            _LOGGER.info("Updated metadata with binary sensor info for student %s", student_id)
+                _LOGGER.info("Updated metadata with binary sensor info for student %s", student_id)
 
     except Exception as err:
         _LOGGER.error("Failed to update metadata with binary sensors: %s", err, exc_info=True)
@@ -203,10 +205,10 @@ async def async_setup_entry(
 
     async_add_entities(entities)
 
-    # Update metadata with binary sensor information (async)
-    # Add a small delay to avoid race condition with sensor.py writing the same file
+    # Update metadata with binary sensor information (async).
+    # METADATA_FILE_LOCK serializes this against sensor.py's writes, so no
+    # arbitrary delay is needed here.
     async def _delayed_metadata_update():
-        await asyncio.sleep(2)  # Wait 2 seconds for sensor.py to finish writing
         await _update_entity_metadata_with_binary_sensors(hass, student_id)
 
     hass.async_create_task(_delayed_metadata_update())

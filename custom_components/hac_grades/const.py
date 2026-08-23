@@ -1,7 +1,12 @@
 """Constants for the HAC Grades integration."""
+import asyncio
 from datetime import timedelta
 
 DOMAIN = "hac_grades"
+
+# Serializes read-modify-write access to hac_entity_registry.json across
+# sensor.py and binary_sensor.py, which may run concurrently for multiple students.
+METADATA_FILE_LOCK = asyncio.Lock()
 
 # Configuration
 CONF_SCHOOL_URL = "school_url"
