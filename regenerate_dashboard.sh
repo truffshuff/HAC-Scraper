@@ -1,16 +1,23 @@
 #!/bin/bash
 # Helper script to regenerate HAC Grades dashboard
-# Usage: ./regenerate_dashboard.sh [config_dir]
+# Usage: ./regenerate_dashboard.sh [config_dir|path/to/hac_entity_registry.json]
 
 set -e
 
-# Default to current directory if not specified
-CONFIG_DIR="${1:-.}"
-
-# Metadata file is in the integration's custom_components folder
-METADATA_FILE="$CONFIG_DIR/custom_components/hac_grades/hac_entity_registry.json"
-OUTPUT_FILE="$CONFIG_DIR/hac_grades_dashboard_generated.yaml"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ARG="${1:-.}"
+
+# Accept either a config directory (containing custom_components/hac_grades/hac_entity_registry.json)
+# or a direct path to a metadata JSON file.
+if [ -f "$ARG" ]; then
+    METADATA_FILE="$ARG"
+    OUTPUT_FILE="$(dirname "$ARG")/hac_grades_dashboard_generated.yaml"
+    CONFIG_DIR="$(dirname "$ARG")"
+else
+    CONFIG_DIR="$ARG"
+    METADATA_FILE="$CONFIG_DIR/custom_components/hac_grades/hac_entity_registry.json"
+    OUTPUT_FILE="$CONFIG_DIR/hac_grades_dashboard_generated.yaml"
+fi
 
 echo "========================================="
 echo "HAC Grades Dashboard Generator"
