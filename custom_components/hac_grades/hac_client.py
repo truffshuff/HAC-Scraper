@@ -155,8 +155,13 @@ export default async ({{ page }}) => {{
             timeout: 45000
         }});
 
-        // Wait for grades to load - this is critical!
-        await page.waitForSelector('span[id*="lblOverallAverage"]', {{ timeout: 10000 }});
+        // Wait for grades to load, but don't fail if the current quarter has no
+        // assignments yet (e.g. start of a new school year with new classes)
+        try {{
+            await page.waitForSelector('span[id*="lblOverallAverage"]', {{ timeout: 10000 }});
+        }} catch (e) {{
+            // No grades posted yet for this quarter - that's okay
+        }}
 
         // Get the HTML content after everything has loaded
         const html = await page.content();
@@ -304,10 +309,10 @@ export default async ({{ page }}) => {{
     async def _fetch_quarter_with_browserless(self, quarter: str) -> str | None:
         """Fetch a specific quarter's HTML using browserless to change the dropdown."""
         try:
-            # Map quarter to dropdown value (format: {quarter_num}-{year})
-            # We'll use 2026 as the year since that's what appears in the HTML
+            # Dropdown values are formatted as "{quarter_num}-{school_year}" (e.g. "1-2026").
+            # The school year portion changes every year, so it's looked up dynamically
+            # from the page instead of being hardcoded.
             quarter_num = quarter[1]  # Extract number from "Q1", "Q2", etc.
-            quarter_value = f"{quarter_num}-2026"
 
             # Escape credentials
             escaped_username = self.username.replace("'", "\\'").replace('"', '\\"')
@@ -371,8 +376,20 @@ export default async ({{ page }}) => {{
         // Wait for the dropdown to be available
         await page.waitForSelector('#plnMain_ddlReportCardRuns', {{ timeout: 15000 }});
 
+        // Find the dropdown option for this quarter regardless of school year
+        const quarterValue = await page.evaluate((quarterNum) => {{
+            const select = document.querySelector('#plnMain_ddlReportCardRuns');
+            if (!select) return null;
+            const option = Array.from(select.options).find(opt => opt.value.startsWith(quarterNum + '-'));
+            return option ? option.value : null;
+        }}, '{quarter_num}');
+
+        if (!quarterValue) {{
+            return {{ error: 'No dropdown option found for quarter {quarter}' }};
+        }}
+
         // Select the quarter from the dropdown
-        await page.select('#plnMain_ddlReportCardRuns', '{quarter_value}');
+        await page.select('#plnMain_ddlReportCardRuns', quarterValue);
 
         // Click the refresh button to load the quarter data
         await Promise.all([
