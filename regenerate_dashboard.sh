@@ -1,11 +1,28 @@
 #!/bin/bash
 # Helper script to regenerate HAC Grades dashboard
-# Usage: ./regenerate_dashboard.sh [config_dir|path/to/hac_entity_registry.json]
+#
+# Usage: ./regenerate_dashboard.sh [config_dir|path/to/hac_entity_registry.json] [options]
+#
+# Any options after the path are passed to generate_dashboard.py, e.g.:
+#   ./regenerate_dashboard.sh /config --student-names "100001:Alex,100002:Sam" --student-order 100001,100002
+#   ./regenerate_dashboard.sh /config --remove-stale --dry-run
+#
+# --remove-stale also removes entities and course devices for courses that no
+# longer exist (e.g. last year's classes). It calls Home Assistant's API, so
+# it needs --ha-url and --token (or HA_URL and HA_TOKEN set). In a Home
+# Assistant app (add-on) terminal it connects automatically.
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ARG="${1:-.}"
+
+# The first argument is the config dir or metadata file, unless it's an option
+if [ $# -gt 0 ] && [[ "$1" != -* ]]; then
+    ARG="$1"
+    shift
+else
+    ARG="."
+fi
 
 # Accept either a config directory (containing custom_components/hac_grades/hac_entity_registry.json)
 # or a direct path to a metadata JSON file.
@@ -26,6 +43,9 @@ echo ""
 echo "Config Directory: $CONFIG_DIR"
 echo "Metadata File: $METADATA_FILE"
 echo "Output File: $OUTPUT_FILE"
+if [ $# -gt 0 ]; then
+    echo "Options: $*"
+fi
 echo ""
 
 # Check if metadata file exists
@@ -51,33 +71,34 @@ else
     exit 1
 fi
 
+if ! "$PYTHON_CMD" -c "import yaml" &> /dev/null; then
+    echo "ERROR: The PyYAML package is missing"
+    echo "Install it with: $PYTHON_CMD -m pip install pyyaml"
+    exit 1
+fi
+
 echo "Using Python: $PYTHON_CMD"
 echo ""
 
-# Run the generator
+# Run the generator (set -e exits here with its status if it fails)
 echo "Generating dashboard..."
 "$PYTHON_CMD" "$SCRIPT_DIR/generate_dashboard.py" \
     --metadata-file "$METADATA_FILE" \
-    --output "$OUTPUT_FILE"
+    --output "$OUTPUT_FILE" \
+    "$@"
 
-if [ $? -eq 0 ]; then
-    echo ""
-    echo "========================================="
-    echo "SUCCESS!"
-    echo "========================================="
-    echo ""
-    echo "Dashboard generated: $OUTPUT_FILE"
-    echo ""
-    echo "Next steps:"
-    echo "  1. Copy the contents of $OUTPUT_FILE"
-    echo "  2. In Home Assistant, go to Settings → Dashboards"
-    echo "  3. Select your dashboard and click Edit"
-    echo "  4. Click the three dots → Raw configuration editor"
-    echo "  5. Paste the generated YAML"
-    echo "  6. Save"
-    echo ""
-else
-    echo ""
-    echo "ERROR: Dashboard generation failed"
-    exit 1
-fi
+echo ""
+echo "========================================="
+echo "SUCCESS!"
+echo "========================================="
+echo ""
+echo "Dashboard generated: $OUTPUT_FILE"
+echo ""
+echo "Next steps:"
+echo "  1. Copy the contents of $OUTPUT_FILE"
+echo "  2. In Home Assistant, go to Settings → Dashboards"
+echo "  3. Select your dashboard and click Edit"
+echo "  4. Click the three dots → Raw configuration editor"
+echo "  5. Paste the generated YAML"
+echo "  6. Save"
+echo ""

@@ -127,6 +127,23 @@ If you need to force a regeneration:
 3. Run `generate_dashboard.py`
 4. Update your dashboard
 
+### Removing Old Courses
+Entities for courses that no longer exist (last year's classes, a dropped elective) stay in Home Assistant as "unavailable" forever. The integration's **Remove stale entities** action (`hac_grades.remove_stale_entities`) deletes them, along with any course devices left empty. Run it from **Developer tools → Actions**, or from the script:
+
+```bash
+# See what would be removed
+./regenerate_dashboard.sh /config --remove-stale --dry-run
+
+# Remove it, then regenerate the dashboard
+./regenerate_dashboard.sh /config --remove-stale --student-names "123456:John,789012:Jane"
+```
+
+The script calls Home Assistant's API, so it needs the URL and a long-lived access token (your profile → **Security** → **Long-lived access tokens**): pass `--ha-url` and `--token`, or set `HA_URL` and `HA_TOKEN`. In a Home Assistant app (add-on) terminal it connects automatically.
+
+A student is skipped unless all four quarters loaded the last time the integration started, because a quarter that failed to load would make its real entities look stale. If one is skipped, reload the integration and try again.
+
+Everything after the path in `regenerate_dashboard.sh` is passed to `generate_dashboard.py`, so `--student-names`, `--student-order`, and `--dashboard-path` work there too.
+
 ## Automation (Optional)
 
 You can create a Home Assistant automation to regenerate the dashboard automatically:

@@ -53,7 +53,7 @@ automation:
     action:
       - service: button.press
         target:
-          entity_id: button.student_12345_q2_force_refresh
+          entity_id: button.hac_student_12345_force_refresh
 ```
 
 **Note**: The Force Refresh button fetches data for all configured quarters, not just the current one.

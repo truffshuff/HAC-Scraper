@@ -19,12 +19,16 @@ Required frontend cards (HACS):
 
 Usage:
     python generate_dashboard.py [--metadata-file PATH] [--output PATH]
+    python generate_dashboard.py --remove-stale [--dry-run] [--ha-url URL --token TOKEN]
 """
 
 import argparse
 import json
 import logging
+import os
 import re
+import urllib.error
+import urllib.request
 from pathlib import Path
 from typing import Any
 
@@ -210,6 +214,25 @@ def _course_entity(course_clean: str, key: str, quarter: str) -> str:
     return f"sensor.{course_clean}_{key}_{quarter}"
 
 
+# Per-student entities the dashboard uses, with their default IDs. The
+# integration records the actual IDs in the metadata file, since they can
+# differ (e.g. a "_2" suffix, or an area prefix).
+DEFAULT_STUDENT_ENTITIES = {
+    "refresh_button": "button.hac_student_{id}_force_refresh",
+    "last_scraped": "sensor.hac_student_{id}_last_scraped",
+    "current_quarter": "sensor.hac_student_{id}_current_quarter",
+}
+
+
+def _student_role_entities(students: dict[str, Any], student_id: str) -> dict[str, str]:
+    """Return the per-student entity IDs, preferring those recorded in the metadata."""
+    recorded = students[student_id].get("entities") or {}
+    return {
+        role: recorded.get(role) or default.format(id=student_id)
+        for role, default in DEFAULT_STUDENT_ENTITIES.items()
+    }
+
+
 def _course_path(quarter: str, student_id: str, course_clean: str) -> str:
     return f"{quarter}-{student_id}-{course_clean}"
 
@@ -387,6 +410,7 @@ def create_student_section(
     quarter: str,
     quarter_courses: dict[str, list[dict[str, Any]]],
     dashboard_path: str,
+    entities: dict[str, str],
     show_quarter: bool = False,
 ) -> dict[str, Any]:
     """Create one student's section on a quarter overview.
@@ -397,6 +421,7 @@ def create_student_section(
         quarter: Lowercase quarter (e.g. "q1")
         quarter_courses: Every student's courses this quarter, keyed by student ID
         dashboard_path: The base path for the dashboard (for navigation links)
+        entities: The student's per-student entity IDs (see _student_role_entities)
         show_quarter: Append the quarter to the heading (used on the Now view)
     """
     gpa = _student_entity(student_id, "gpa", quarter)
@@ -411,7 +436,7 @@ def create_student_section(
             "badges": [
                 {
                     "type": "entity",
-                    "entity": f"sensor.hac_student_{student_id}_last_scraped",
+                    "entity": entities["last_scraped"],
                     "show_state": True,
                     "show_icon": True,
                 },
@@ -421,7 +446,7 @@ def create_student_section(
                     "tap_action": {
                         "action": "perform-action",
                         "perform_action": "button.press",
-                        "target": {"entity_id": f"button.hac_student_{student_id}_force_refresh"},
+                        "target": {"entity_id": entities["refresh_button"]},
                     },
                 },
             ],
@@ -499,7 +524,12 @@ def create_overview_view(
         "max_columns": 4,
         "sections": [
             create_student_section(
-                sid, _student_name(students, sid), quarter_lower, quarter_courses, dashboard_path
+                sid,
+                _student_name(students, sid),
+                quarter_lower,
+                quarter_courses,
+                dashboard_path,
+                _student_role_entities(students, sid),
             )
             for sid in quarter_courses
         ],
@@ -522,7 +552,7 @@ def create_now_view(
 
     sections = []
     for student_id in student_ids:
-        current = f"sensor.hac_student_{student_id}_current_quarter"
+        current = _student_role_entities(students, student_id)["current_quarter"]
         sections.append({
             "type": "grid",
             "column_span": 2,
@@ -547,11 +577,12 @@ def create_now_view(
                 quarter.lower(),
                 quarter_courses,
                 dashboard_path,
+                _student_role_entities(students, student_id),
                 show_quarter=True,
             )
             section["visibility"] = [{
                 "condition": "state",
-                "entity": f"sensor.hac_student_{student_id}_current_quarter",
+                "entity": _student_role_entities(students, student_id)["current_quarter"],
                 "state": quarter.upper(),
             }]
             sections.append(section)
@@ -1000,6 +1031,66 @@ def generate_dashboard(
     return {"views": views}
 
 
+def remove_stale_entities(ha_url: str, token: str, dry_run: bool) -> bool:
+    """Call the integration's remove_stale_entities action and print the result.
+
+    Returns True if the call succeeded.
+    """
+    url = ha_url.rstrip("/") + "/api/services/hac_grades/remove_stale_entities?return_response"
+    request = urllib.request.Request(
+        url,
+        data=json.dumps({"dry_run": dry_run}).encode(),
+        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=60) as response:
+            body = json.load(response)
+    except urllib.error.HTTPError as err:
+        _LOGGER.error("Home Assistant returned %s: %s", err.code, err.read().decode(errors="replace"))
+        if err.code == 400:
+            _LOGGER.error("Is HAC Grades 0.4.1 or newer installed? Older versions don't have this action.")
+        return False
+    except (urllib.error.URLError, OSError) as err:
+        _LOGGER.error("Could not reach Home Assistant at %s: %s", ha_url, err)
+        return False
+
+    print("\n" + "=" * 60)
+    print("Stale entities (dry run, nothing removed)" if dry_run else "Removed stale entities")
+    print("=" * 60)
+    for entry in body.get("service_response", {}).get("entries", []):
+        print(f"\n{entry['title']}")
+        if entry.get("skipped"):
+            print(f"  Skipped: {entry['skipped']}")
+            continue
+        if not entry["removed_entities"] and not entry["removed_devices"]:
+            print("  Nothing stale")
+            continue
+        print(f"  Entities ({len(entry['removed_entities'])}):")
+        for entity_id in entry["removed_entities"]:
+            print(f"    {entity_id}")
+        if entry["removed_devices"]:
+            print(f"  Devices ({len(entry['removed_devices'])}): {', '.join(entry['removed_devices'])}")
+    print()
+    return True
+
+
+def _resolve_ha_connection(ha_url: str | None, token: str | None) -> tuple[str, str] | None:
+    """Find the Home Assistant URL and token from arguments or the environment.
+
+    Inside a Home Assistant app (add-on) terminal, the Supervisor proxy and
+    its token are used automatically.
+    """
+    ha_url = ha_url or os.environ.get("HA_URL")
+    token = token or os.environ.get("HA_TOKEN")
+    if not (ha_url and token) and os.environ.get("SUPERVISOR_TOKEN"):
+        ha_url = ha_url or "http://supervisor/core"
+        token = token or os.environ["SUPERVISOR_TOKEN"]
+    if not (ha_url and token):
+        return None
+    return ha_url, token
+
+
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
@@ -1030,6 +1121,29 @@ def main():
         default=None,
     )
     parser.add_argument(
+        "--remove-stale",
+        action="store_true",
+        help="Also remove HAC Grades entities and course devices that no longer match a current course "
+             "(e.g. last year's classes). Needs --ha-url and --token, or HA_URL and HA_TOKEN set",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="With --remove-stale: list what would be removed without removing anything",
+    )
+    parser.add_argument(
+        "--ha-url",
+        type=str,
+        help="Home Assistant URL for --remove-stale, e.g. http://homeassistant.local:8123 (or set HA_URL)",
+        default=None,
+    )
+    parser.add_argument(
+        "--token",
+        type=str,
+        help="Long-lived access token for --remove-stale (or set HA_TOKEN)",
+        default=None,
+    )
+    parser.add_argument(
         "--student-names",
         type=str,
         help="Comma-separated list of student names in format 'ID:Name' (e.g., '100001:Alex,100002:Sam')",
@@ -1037,6 +1151,17 @@ def main():
     )
 
     args = parser.parse_args()
+
+    if args.remove_stale:
+        connection = _resolve_ha_connection(args.ha_url, args.token)
+        if connection is None:
+            _LOGGER.error(
+                "--remove-stale needs the Home Assistant URL and a long-lived access token: "
+                "pass --ha-url and --token, or set HA_URL and HA_TOKEN"
+            )
+            return 1
+        if not remove_stale_entities(*connection, args.dry_run):
+            return 1
 
     # Load metadata
     if not args.metadata_file.exists():

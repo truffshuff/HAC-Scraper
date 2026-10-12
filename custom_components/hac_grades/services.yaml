@@ -1,0 +1,13 @@
+remove_stale_entities:
+  name: Remove stale entities
+  description: >-
+    Remove HAC Grades entities and course devices that no longer match a current
+    course (for example last year's classes, which otherwise stay "unavailable").
+    A student is skipped unless all four quarters loaded at startup.
+  fields:
+    dry_run:
+      name: Dry run
+      description: List what would be removed without removing anything.
+      default: false
+      selector:
+        boolean:

@@ -10,7 +10,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import CONF_STUDENT_ID, DATA_COORDINATOR, DOMAIN
+from .const import CONF_STUDENT_ID, DATA_COORDINATOR, DATA_UNIQUE_IDS, DOMAIN
 from .coordinator import HACDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -25,11 +25,16 @@ async def async_setup_entry(
     coordinator = hass.data[DOMAIN][entry.entry_id][DATA_COORDINATOR]
     student_id = entry.data[CONF_STUDENT_ID]
 
-    async_add_entities([HACRefreshButton(coordinator, entry, student_id)])
+    button = HACRefreshButton(coordinator, entry, student_id)
+    hass.data[DOMAIN][entry.entry_id][DATA_UNIQUE_IDS].add(button.unique_id)
+    async_add_entities([button])
 
 
 class HACRefreshButton(CoordinatorEntity[HACDataUpdateCoordinator], ButtonEntity):
     """Button to force refresh HAC data."""
+
+    # Prefix the device name so new installs get button.hac_student_<id>_force_refresh
+    _attr_has_entity_name = True
 
     def __init__(
         self,

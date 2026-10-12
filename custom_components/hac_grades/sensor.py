@@ -16,12 +16,23 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
 
-from .const import CONF_STUDENT_ID, CONF_QUARTER, DATA_COORDINATOR, DATA_VIA_DEVICE, DOMAIN, METADATA_FILE_LOCK, QUARTERS
+from .const import (
+    CONF_STUDENT_ID,
+    CONF_QUARTER,
+    DATA_COORDINATOR,
+    DATA_ENTITY_QUARTERS,
+    DATA_UNIQUE_IDS,
+    DATA_VIA_DEVICE,
+    DOMAIN,
+    METADATA_FILE_LOCK,
+    QUARTERS,
+)
 from .coordinator import HACDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -47,10 +58,35 @@ def _clean_course_name(course_name: str) -> str:
     return course_name
 
 
+async def _lookup_student_entity_ids(hass: HomeAssistant, entry_id: str) -> dict[str, str]:
+    """Look up the actual entity IDs of the per-student entities the dashboard uses.
+
+    These can differ from the default naming (e.g. a "_2" suffix, or an area
+    prefix), so the dashboard generator reads them from the metadata file.
+    Entities added moments ago may not be registered yet, so retry briefly.
+    """
+    ent_reg = er.async_get(hass)
+    wanted = {
+        "refresh_button": ("button", f"{entry_id}_force_refresh"),
+        "last_scraped": ("sensor", f"{entry_id}_last_scraped"),
+        "current_quarter": ("sensor", f"{entry_id}_current_quarter"),
+    }
+    found: dict[str, str] = {}
+    for _ in range(20):
+        for key, (domain, unique_id) in wanted.items():
+            if key not in found and (entity_id := ent_reg.async_get_entity_id(domain, DOMAIN, unique_id)):
+                found[key] = entity_id
+        if len(found) == len(wanted):
+            break
+        await asyncio.sleep(0.5)
+    return found
+
+
 async def _write_entity_metadata(
     hass: HomeAssistant,
     student_id: str,
     all_quarters_data: dict[str, Any],
+    entity_ids: dict[str, str],
 ) -> None:
     """Write entity metadata to a JSON file for dashboard generation.
 
@@ -58,6 +94,7 @@ async def _write_entity_metadata(
         hass: Home Assistant instance
         student_id: The student ID
         all_quarters_data: Dictionary of all quarters data from coordinator
+        entity_ids: Actual entity IDs of per-student entities, keyed by role
     """
     try:
         # Determine the metadata file path (in the integration's custom_components folder)
@@ -88,6 +125,7 @@ async def _write_entity_metadata(
             # Build student metadata
             student_metadata = {
                 "student_id": student_id,
+                "entities": entity_ids,
                 "quarters": {},
             }
 
@@ -1011,11 +1049,15 @@ async def async_setup_entry(
                     )
 
         _LOGGER.info("Adding %d total entities", len(entities))
+        entry_data = hass.data[DOMAIN][entry.entry_id]
+        entry_data[DATA_UNIQUE_IDS].update(e.unique_id for e in entities)
+        entry_data[DATA_ENTITY_QUARTERS] = quarters_available
         async_add_entities(entities)
         _LOGGER.info("Successfully set up HAC Grades sensors")
 
         # Write entity metadata for dashboard generation (async)
-        await _write_entity_metadata(hass, student_id, all_quarters_data)
+        entity_ids = await _lookup_student_entity_ids(hass, entry.entry_id)
+        await _write_entity_metadata(hass, student_id, all_quarters_data, entity_ids)
 
     # Schedule entity creation in the background (non-blocking)
     hass.async_create_task(_create_entities_when_ready())

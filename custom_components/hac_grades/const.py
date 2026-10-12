@@ -41,7 +41,15 @@ CATEGORY_WEIGHTS = {
     "PRODUCT": 0.50
 }
 
+# Services
+SERVICE_REMOVE_STALE_ENTITIES = "remove_stale_entities"
+ATTR_DRY_RUN = "dry_run"
+
 # Data keys
 DATA_COORDINATOR = "coordinator"
 DATA_VIA_DEVICE = "via_device"
+# Unique IDs of every entity created this run, and the quarters the sensors
+# were created from (None until the sensor platform has created its entities)
+DATA_UNIQUE_IDS = "unique_ids"
+DATA_ENTITY_QUARTERS = "entity_quarters"
 DATA_UNDO_UPDATE_LISTENER = "undo_update_listener"

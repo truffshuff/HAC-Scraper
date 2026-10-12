@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2026-10-11
+
+### Added
+
+- **Remove Stale Entities Action**: `hac_grades.remove_stale_entities` removes entities and course devices for courses that no longer exist (e.g. last year's classes), with a `dry_run` option. Students whose quarters didn't all load at startup are skipped so a failed scrape can't delete real entities. `regenerate_dashboard.sh --remove-stale [--dry-run]` calls it through the Home Assistant API.
+
+### Fixed
+
+- **Dashboard Entity IDs**: The metadata file now records each student's actual refresh button, Last Scraped, and Current Quarter entity IDs, and the generator uses them, so dashboards work when those IDs differ from the defaults (e.g. `button.force_refresh_2`).
+- **Refresh Button Naming**: New installs get `button.hac_student_<id>_force_refresh` instead of `button.force_refresh`, `button.force_refresh_2`, and so on. Existing button IDs are unchanged.
+- **regenerate_dashboard.sh**: Options after the path (such as `--student-names` and `--student-order`) are now passed to the generator, and a missing PyYAML package is reported clearly.
+
 ## [0.4.0] - 2026-10-11
 
 ### Added

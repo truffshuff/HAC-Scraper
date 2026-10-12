@@ -18,7 +18,7 @@ from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import CONF_STUDENT_ID, CONF_QUARTER, DATA_COORDINATOR, DATA_VIA_DEVICE, DOMAIN, METADATA_FILE_LOCK
+from .const import CONF_STUDENT_ID, CONF_QUARTER, DATA_COORDINATOR, DATA_UNIQUE_IDS, DATA_VIA_DEVICE, DOMAIN, METADATA_FILE_LOCK
 from .coordinator import HACDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -205,6 +205,7 @@ async def async_setup_entry(
                     )
                 )
 
+    hass.data[DOMAIN][entry.entry_id][DATA_UNIQUE_IDS].update(e.unique_id for e in entities)
     async_add_entities(entities)
 
     # Update metadata with binary sensor information (async).

@@ -261,6 +261,7 @@ After installation, you can configure:
 
 - **Update Interval** - How often to poll HAC (1-24 hours, default: 6 hours)
 - **Force Refresh** - Manually trigger grade updates via button entity
+- **Remove Stale Entities** - `hac_grades.remove_stale_entities` action cleans up entities for courses that no longer exist (see [DASHBOARD_GENERATION.md](DASHBOARD_GENERATION.md#removing-old-courses))
 
 ## 👨‍👩‍👧‍👦 Multiple Students and Quarters
 
