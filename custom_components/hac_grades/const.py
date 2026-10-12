@@ -43,4 +43,5 @@ CATEGORY_WEIGHTS = {
 
 # Data keys
 DATA_COORDINATOR = "coordinator"
+DATA_VIA_DEVICE = "via_device"
 DATA_UNDO_UPDATE_LISTENER = "undo_update_listener"

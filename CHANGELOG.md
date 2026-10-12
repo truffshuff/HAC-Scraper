@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-10-11
+
+### Added
+
+- **Current Quarter Sensor**: `sensor.hac_student_<id>_current_quarter` reports the latest quarter with graded work. The quarter HAC selects by default is available as the `hac_selected_quarter` attribute.
+- **Now Dashboard View**: The generated dashboard opens on a "Now" tab that shows each student's current quarter.
+
+### Changed
+
+- **Dashboard Redesign**: The generated dashboard now uses Mushroom, Nodalia, and flex-table cards. Quarter tabs show a GPA gauge, stat tiles, an untruncated "Needs attention" table (padded so side-by-side students stay aligned), a per-student trend chart with one line per course, and color-coded course cards with 3-week grade sparklines. Course pages are hidden subviews with a back arrow: the grade gauge with category progress bars and at-a-glance stats beside it, a full-width stepped trend chart (8 weeks, 90%/80% guides, no gaps across restarts, a dot per graded assignment placed when its score was posted, toggleable from the legend), and an assignment table with a compact phone layout.
+- **Course Icons**: Icons now match on word starts and cover HAC abbreviations (e.g. "Int Lang Arts" no longer gets the art icon; "Prin Acct Fin", "Hnr Chemistry", and "Weight Train" get specific icons).
+
+### Fixed
+
+- **Device Registry Deprecation**: Course devices now link to the student device with `via_device_id` instead of the deprecated `via_device` identifier tuple (stops working in Home Assistant 2027.8).
+
 ## [0.3.1] - 2025-11-29
 
 ### Fixed

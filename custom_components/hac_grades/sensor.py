@@ -21,7 +21,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
 
-from .const import CONF_STUDENT_ID, CONF_QUARTER, DATA_COORDINATOR, DOMAIN, METADATA_FILE_LOCK
+from .const import CONF_STUDENT_ID, CONF_QUARTER, DATA_COORDINATOR, DATA_VIA_DEVICE, DOMAIN, METADATA_FILE_LOCK, QUARTERS
 from .coordinator import HACDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -749,6 +749,61 @@ class HACLastScrapedSensor(CoordinatorEntity[HACDataUpdateCoordinator], SensorEn
         }
 
 
+class HACCurrentQuarterSensor(CoordinatorEntity[HACDataUpdateCoordinator], SensorEntity):
+    """Sensor reporting the quarter currently in progress.
+
+    This is the latest quarter with any graded work, so a new quarter only
+    becomes current once its first grade posts. The quarter HAC selects by
+    default on login is exposed as an attribute for reference.
+    """
+
+    _attr_has_entity_name = True
+
+    def __init__(
+        self,
+        coordinator: HACDataUpdateCoordinator,
+        entry: ConfigEntry,
+        student_id: str,
+    ) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator)
+        self._student_id = student_id
+        self._attr_unique_id = f"{entry.entry_id}_current_quarter"
+        self._attr_name = "Current Quarter"
+        self._attr_icon = "mdi:calendar-today"
+        self._attr_device_class = SensorDeviceClass.ENUM
+        self._attr_options = QUARTERS
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, entry.entry_id)},
+            name=f"HAC - Student {student_id}",
+            manufacturer="Home Access Center",
+            model="Grade Portal",
+        )
+
+    @property
+    def native_value(self) -> str | None:
+        """Return the latest quarter that has a computed average."""
+        if not self.coordinator.data:
+            return None
+
+        all_quarters = self.coordinator.data.get("all_quarters", {})
+        graded = [
+            q for q in QUARTERS
+            if all_quarters.get(q, {}).get("overall_summary", {}).get("gpa_like_average") is not None
+        ]
+        return graded[-1] if graded else None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return additional attributes."""
+        if not self.coordinator.data:
+            return {}
+        return {
+            "student_id": self._student_id,
+            "hac_selected_quarter": self.coordinator.data.get("selected_quarter"),
+        }
+
+
 class HACMultiQuarterSummarySensor(CoordinatorEntity[HACDataUpdateCoordinator], SensorEntity):
     """Sensor that summarizes data across all quarters."""
 
@@ -852,6 +907,7 @@ async def async_setup_entry(
 ) -> None:
     """Set up HAC Grades sensors."""
     coordinator: HACDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id][DATA_COORDINATOR]
+    via_device = hass.data[DOMAIN][entry.entry_id][DATA_VIA_DEVICE]
 
     # Get student ID for entity IDs
     student_id = entry.data[CONF_STUDENT_ID]
@@ -903,6 +959,8 @@ async def async_setup_entry(
         entities.append(last_scraped_sensor)
         _LOGGER.info("Created Last Scraped sensor with unique_id: %s", last_scraped_sensor.unique_id)
 
+        entities.append(HACCurrentQuarterSensor(coordinator, entry, student_id))
+
         # Add multi-quarter summary sensor
         entities.append(
             HACMultiQuarterSummarySensor(
@@ -948,6 +1006,7 @@ async def async_setup_entry(
                             course_name,
                             student_id,
                             quarter_lower,
+                            via_device,
                         )
                     )
 
@@ -1047,6 +1106,7 @@ class HACCourseSensor(CoordinatorEntity[HACDataUpdateCoordinator], SensorEntity)
         course_name: str,
         student_id: str,
         quarter: str,
+        via_device: dict[str, Any],
     ) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator)
@@ -1101,7 +1161,7 @@ class HACCourseSensor(CoordinatorEntity[HACDataUpdateCoordinator], SensorEntity)
             name=device_name,
             manufacturer="Home Access Center",
             model="Course",
-            via_device=(DOMAIN, entry.entry_id),
+            **via_device,
         )
 
         _LOGGER.debug("Device name set to: '%s'", device_name)

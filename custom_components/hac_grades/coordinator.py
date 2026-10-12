@@ -117,6 +117,7 @@ class HACDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     },
                     "last_updated": data.get("last_updated"),
                     "student_id": data.get("student_id"),
+                    "selected_quarter": data.get("selected_quarter"),
                     "quarter": self.quarter,
                 }
 
@@ -126,6 +127,7 @@ class HACDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 "overall_summary": quarter_data.get("overall_summary", {}),
                 "last_updated": data.get("last_updated"),
                 "student_id": data.get("student_id"),
+                "selected_quarter": data.get("selected_quarter"),
                 "quarter": self.quarter,
                 "all_quarters": quarters_data,  # Keep all quarters for reference
             }

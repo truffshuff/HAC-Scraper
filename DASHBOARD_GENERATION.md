@@ -6,24 +6,20 @@ This system automatically generates Lovelace dashboard YAML configurations based
 
 ### Required Custom Cards
 
-The generated dashboards use custom Lovelace cards. Install these via HACS before using the dashboards:
+The generated dashboards use these HACS frontend cards. Install them before importing the dashboard:
 
-1. **ApexCharts Card** (Required)
-   - Used for grade trend visualizations
-   - Install: HACS → Frontend → Search "ApexCharts Card"
+1. **Mushroom** (v5 or newer): course cards, stat tiles, and category bars
+   - Repository: [piitaya/lovelace-mushroom](https://github.com/piitaya/lovelace-mushroom)
+2. **Nodalia Cards**: circular GPA and course grade gauges
+   - Repository: [danielmigueltejedor/nodalia-cards](https://github.com/danielmigueltejedor/nodalia-cards)
+3. **flex-table-card**: the full assignment table on each course page
+   - Repository: [custom-cards/flex-table-card](https://github.com/custom-cards/flex-table-card)
+4. **ApexCharts Card**: the grade trend chart on each course page
    - Repository: [RomRider/apexcharts-card](https://github.com/RomRider/apexcharts-card)
 
-2. **Auto-entities** (Optional but recommended)
-   - Used for dynamic course lists
-   - Install: HACS → Frontend → Search "Auto-entities"
-   - Repository: [thomasloven/lovelace-auto-entities](https://github.com/thomasloven/lovelace-auto-entities)
+Install via **HACS → Frontend** and search for each card by name. Without them, the dashboard shows "Custom element doesn't exist" errors for those cards.
 
-3. **Bar Card** (Optional but recommended)
-   - Used for grade percentage displays
-   - Install: HACS → Frontend → Search "Bar Card"
-   - Repository: [custom-cards/bar-card](https://github.com/custom-cards/bar-card)
-
-**Without these cards**, the dashboard will show errors for those card types. ApexCharts is especially important as it's used for the grade trends section on each course page.
+Home Assistant 2026.2 or newer is recommended (heading button badges and the `trend-graph` / `bar-gauge` card features).
 
 ## Overview
 
@@ -94,27 +90,25 @@ python3 generate_dashboard.py \
 
 The dashboard includes:
 
-### Overview Pages (per quarter)
-- **Q1 Overview**, **Q2 Overview**, etc.
-- Student GPA gauges for all students
-- Grade statistics for each student
-- Missing assignment alerts
-- Last updated timestamp
+### Now (default tab)
+Opens on each student's current quarter, as reported by their **Current Quarter** sensor (the latest quarter with graded work). It shows the same sections as the quarter tabs below, with the quarter in each student's heading, and switches to the next quarter by itself once that quarter's first grade posts.
 
-### Individual Course Pages
-One page per course per student per quarter, including:
-- **Smart Icons**: Automatically selects appropriate MDI icons based on course name
-  - Math courses → calculator icon
-  - Science → flask icon
-  - Spanish/French → translate icon
-  - Art → palette icon
-  - And many more!
-- **Gauges**: Overall grade, Practice, Process, Product scores
-- **Category Statistics**: Breakdown by assignment category
-- **Extended Entities**: Detailed grade information
-- **Latest Assignments**: Recent assignments with scores
-- **Assignment Details**: Complete assignment list with filtering
-- **Grade Trends Chart**: ApexCharts visualization of category scores over time
+### Overview Pages (one tab per quarter)
+Each quarter tab (**Q1**, **Q2**, ...) has one section per student with:
+- **Heading** with the last-scraped time and a refresh button
+- **GPA gauge** with highest/lowest grade, missing and not-graded counts beside it
+- **Needs attention** table listing every missing, too-late, below-50, and not-yet-graded assignment across all courses (read from each course's assignment details, so nothing is truncated). Each table pads itself with blank rows to match the student with the most items, so side-by-side students stay aligned.
+- **Course cards**, colored by grade (green ≥90, amber ≥80, orange ≥70, red below), with days since the last grade posted, a 3-week grade sparkline, and a red badge when the course has missing work. Tap a card to open the course page.
+- **Trends** chart with one stepped line per course over the last 8 weeks, with 90%/80% guides and a shared 60–110% scale so side-by-side students are directly comparable
+
+A quarter with no grades yet shows a "No grades posted yet" card instead of the gauge.
+
+### Course Pages (hidden subviews)
+One page per course per student per quarter. They are subviews, so they stay out of the tab bar, and their back arrow returns to the page you came from (Now or a quarter tab). Each includes:
+- **Smart Icons**: picks an MDI icon from the course name (Spanish → translate, Hnr Chemistry → flask, Prin Acct Fin → calculator, and so on)
+- **Summary**: the overall grade gauge on the left; on the right, Practice / Process / Product cards (weight, score, graded count, progress bar), the latest assignment, days since the last grade posted, highest/lowest score, and scored/pending counts. On a phone these stack under the gauge.
+- **Trend chart** (full width): overall grade and category scores over the last 8 weeks, drawn as steps since grades only change when an assignment posts, with dashed 90%/80% guides. Each graded assignment is plotted as a dot in its category's color at the time its score was posted (found from the recorder history; anything already graded when the 8-week window starts falls back to its due date), so each dot lines up with the step it caused. Tap "Practice/Process/Product assignments" in the legend to hide or show that set of dots. The scale is capped at 110% so a single extra-credit score can't flatten the chart (hover still shows the real value). Gaps from restarts or failed scrapes are bridged with the last known value. Showing the full range needs the recorder to keep at least 8 weeks of history (`recorder: purge_keep_days: 56` or more; the default is 10).
+- **Assignments table**: every assignment with due date, category, score, percentage, and status. Phones get a compact version (date, title, percentage, status icon).
 
 ## Updating the Dashboard When Courses Change
 
@@ -252,10 +246,11 @@ Then regenerate the dashboard. Note that manually edited names in the metadata f
 
 ### Card Customization
 To customize the generated cards, edit `generate_dashboard.py` and modify the card creation functions:
-- `create_gauge_card()` - Gauge appearance
-- `create_stats_markdown()` - Statistics display
-- `create_course_gauge_section()` - Course page layout
-- etc.
+- `create_student_section()` - Layout of each student's section on a quarter overview
+- `create_course_tile()` - Course cards (colors, sparkline, badge)
+- `create_attention_card()` - The "Needs attention" table
+- `create_course_view()` - Course page layout
+- `COURSE_ICONS` - Course name keyword → icon mapping
 
 ## Troubleshooting
 

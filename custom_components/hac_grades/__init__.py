@@ -1,10 +1,12 @@
 """The HAC Grades integration."""
 from datetime import timedelta
+import inspect
 import logging
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_SCAN_INTERVAL, CONF_USERNAME, Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import device_registry as dr
 
 from .const import (
     CONF_SCHOOL_URL,
@@ -12,6 +14,7 @@ from .const import (
     CONF_QUARTER,
     CONF_BROWSERLESS_URL,
     DATA_COORDINATOR,
+    DATA_VIA_DEVICE,
     DEFAULT_QUARTER,
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_BROWSERLESS_URL,
@@ -53,8 +56,21 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         browserless_url,
     )
 
+    # Create the student (parent) device up front so per-course devices can
+    # link to it by registry ID. HA deprecated linking by identifier tuple
+    # (`via_device`) in favor of `via_device_id`, removal in 2027.8.
+    student_id = entry.data[CONF_STUDENT_ID]
+    student_device = dr.async_get(hass).async_get_or_create(
+        config_entry_id=entry.entry_id,
+        identifiers={(DOMAIN, entry.entry_id)},
+        name=f"HAC - Student {student_id}",
+        manufacturer="Home Access Center",
+        model="Grade Portal",
+    )
+
     hass.data[DOMAIN][entry.entry_id] = {
         DATA_COORDINATOR: coordinator,
+        DATA_VIA_DEVICE: _via_device_kwargs(student_device.id, entry.entry_id),
     }
 
     # Trigger the initial data fetch in the background first
@@ -75,6 +91,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     entry.async_on_unload(entry.add_update_listener(async_reload_entry))
 
     return True
+
+
+def _via_device_kwargs(device_id: str, entry_id: str) -> dict:
+    """Return the DeviceInfo key linking a course device to the student device.
+
+    Uses `via_device_id` where supported, falling back to the identifier tuple
+    on cores that predate it.
+    """
+    params = inspect.signature(dr.DeviceRegistry.async_get_or_create).parameters
+    if "via_device_id" in params:
+        return {"via_device_id": device_id}
+    return {"via_device": (DOMAIN, entry_id)}
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

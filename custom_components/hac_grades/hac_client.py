@@ -706,6 +706,8 @@ export default async ({{ page }}) => {{
                 "quarters": quarters_data,
                 "last_updated": datetime.now(timezone.utc),
                 "student_id": self._detected_student_id or self.student_id,
+                # Quarter HAC selects by default on login (None if not detected)
+                "selected_quarter": self._initial_quarter,
             }
 
         except Exception as err:

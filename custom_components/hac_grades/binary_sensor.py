@@ -18,7 +18,7 @@ from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import CONF_STUDENT_ID, CONF_QUARTER, DATA_COORDINATOR, DOMAIN, METADATA_FILE_LOCK
+from .const import CONF_STUDENT_ID, CONF_QUARTER, DATA_COORDINATOR, DATA_VIA_DEVICE, DOMAIN, METADATA_FILE_LOCK
 from .coordinator import HACDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -153,6 +153,7 @@ async def async_setup_entry(
 ) -> None:
     """Set up HAC Grades binary sensors."""
     coordinator: HACDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id][DATA_COORDINATOR]
+    via_device = hass.data[DOMAIN][entry.entry_id][DATA_VIA_DEVICE]
 
     entities: list[BinarySensorEntity] = []
 
@@ -200,6 +201,7 @@ async def async_setup_entry(
                         course_name,
                         student_id,
                         quarter_lower,
+                        via_device,
                     )
                 )
 
@@ -294,6 +296,7 @@ class HACCourseBinarySensor(CoordinatorEntity[HACDataUpdateCoordinator], BinaryS
         course_name: str,
         student_id: str,
         quarter: str,
+        via_device: dict[str, Any],
     ) -> None:
         """Initialize the binary sensor."""
         super().__init__(coordinator)
@@ -320,7 +323,7 @@ class HACCourseBinarySensor(CoordinatorEntity[HACDataUpdateCoordinator], BinaryS
             name=f"{course_name} ({quarter.upper()})",
             manufacturer="Home Access Center",
             model="Course",
-            via_device=(DOMAIN, entry.entry_id),
+            **via_device,
         )
 
     @property

@@ -51,11 +51,12 @@ docker run -d -p 3000:3000 --name browserless browserless/chrome
 
 ### Optional: Custom Dashboard Cards
 
-For enhanced dashboards, install these HACS frontend cards:
+The generated dashboard (see [DASHBOARD_GENERATION.md](DASHBOARD_GENERATION.md)) uses these HACS frontend cards:
 
-- **[ApexCharts Card](https://github.com/RomRider/apexcharts-card)** - Grade trend visualizations
-- **[Auto-entities](https://github.com/thomasloven/lovelace-auto-entities)** - Dynamic course lists
-- **[Bar Card](https://github.com/custom-cards/bar-card)** - Grade percentage displays
+- **[Mushroom](https://github.com/piitaya/lovelace-mushroom)** (v5+) - Course cards and stat tiles
+- **[Nodalia Cards](https://github.com/danielmigueltejedor/nodalia-cards)** - GPA and grade gauges
+- **[flex-table-card](https://github.com/custom-cards/flex-table-card)** - Assignment tables
+- **[ApexCharts Card](https://github.com/RomRider/apexcharts-card)** - Grade trend charts
 
 Install via: **HACS** → **Frontend** → Search for card name
 
