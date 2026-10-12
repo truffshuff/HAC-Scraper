@@ -1,7 +1,5 @@
 {
   "name": "Home Access Center (HAC) Grades",
-  "content_in_root": false,
-  "domain": "hac_grades",
-  "category": "integration",
-  "render_readme": true
+  "render_readme": true,
+  "homeassistant": "2024.1.0"
 }

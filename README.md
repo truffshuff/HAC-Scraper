@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="brands/hac_grades/logo.png" alt="HAC Grades Logo" width="200"/>
+  <img src="custom_components/hac_grades/brand/logo.png" alt="HAC Grades Logo" width="200"/>
 
   # HAC Grades - Home Assistant Custom Integration
 
