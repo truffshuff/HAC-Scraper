@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **HACS Validation**: Brand images moved to `custom_components/hac_grades/brand/`, where HACS and Home Assistant look for them; `hacs.json` no longer has the `category` and `domain` keys HACS rejects; the validation workflow is restored (now on `actions/checkout@v5`).
+- **HACS Validation**: `hacs.json` no longer has the `category` and `domain` keys HACS rejects, and the validation workflow is restored (now on `actions/checkout@v5`). Brand images were removed from this repository; they're provided separately, so the workflow skips the `brands` check.
 
 ## [0.4.1] - 2026-10-11
 

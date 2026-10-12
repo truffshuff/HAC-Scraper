@@ -21,3 +21,5 @@ jobs:
         uses: "hacs/action@main"
         with:
           category: "integration"
+          # Brand images come from a separate brands repository, not this one
+          ignore: "brands"
