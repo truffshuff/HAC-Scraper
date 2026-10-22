@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **Missing Sensors After a Failed Scrape**: If the configured quarter failed to load at startup (e.g. browserless dropped the connection), the quarters that did load were discarded and none of that student's quarter or course sensors were created until the next restart; they showed as "unavailable". The other quarters are now kept, and sensors for any quarter or course that appears on a later refresh are added then.
+
 ## [0.4.2] - 2026-10-11
 
 ### Fixed

@@ -105,7 +105,8 @@ class HACDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     self.quarter,
                     list(quarters_data.keys())
                 )
-                # Return empty structure if quarter not found
+                # Return empty structure if quarter not found, but keep the
+                # quarters that did load so their sensors still get created
                 return {
                     "courses": [],
                     "overall_summary": {
@@ -119,6 +120,7 @@ class HACDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     "student_id": data.get("student_id"),
                     "selected_quarter": data.get("selected_quarter"),
                     "quarter": self.quarter,
+                    "all_quarters": quarters_data,
                 }
 
             # Flatten the quarter data to root level for sensors

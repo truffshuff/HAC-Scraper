@@ -15,7 +15,7 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -953,6 +953,57 @@ async def async_setup_entry(
     _LOGGER.debug("Setting up sensors for student %s", student_id)
     _LOGGER.debug("Coordinator data available: %s", coordinator.data is not None)
 
+    entry_data = hass.data[DOMAIN][entry.entry_id]
+    # Unique IDs of the per-quarter sensors added so far
+    added_unique_ids: set[str] = set()
+
+    def _new_quarter_entities(all_quarters_data: dict[str, Any]) -> list[SensorEntity]:
+        """Build the per-quarter and per-course sensors not yet added."""
+        entities: list[SensorEntity] = []
+
+        for quarter, quarter_data in all_quarters_data.items():
+            quarter_lower = quarter.lower()
+
+            # Add overall sensors for this quarter
+            for description in OVERALL_SENSORS:
+                entities.append(
+                    HACOverallSensor(
+                        coordinator,
+                        entry,
+                        description,
+                        student_id,
+                        quarter_lower,
+                    )
+                )
+
+            # Add per-course sensors for this quarter
+            courses = quarter_data.get("courses", [])
+
+            _LOGGER.debug("Creating sensors for %d courses in %s", len(courses), quarter)
+
+            for course in courses:
+                course_index = course.get("course_index")
+                course_name = _clean_course_name(course.get("course", f"Course {course_index}"))
+
+                for description in COURSE_SENSORS:
+                    entities.append(
+                        HACCourseSensor(
+                            coordinator,
+                            entry,
+                            description,
+                            course_index,
+                            course_name,
+                            student_id,
+                            quarter_lower,
+                            via_device,
+                        )
+                    )
+
+        entities = [e for e in entities if e.unique_id not in added_unique_ids]
+        added_unique_ids.update(e.unique_id for e in entities)
+        entry_data[DATA_UNIQUE_IDS].update(e.unique_id for e in entities)
+        return entities
+
     async def _create_entities_when_ready() -> None:
         """Wait for data and create entities in the background."""
         # If data is not yet available, wait for the coordinator to have data
@@ -1008,49 +1059,12 @@ async def async_setup_entry(
             )
         )
 
+        entry_data[DATA_UNIQUE_IDS].update(e.unique_id for e in entities)
+
         # Create sensors for each quarter that has data
-        for quarter in quarters_available:
-            quarter_lower = quarter.lower()
-
-            # Add overall sensors for this quarter
-            for description in OVERALL_SENSORS:
-                entities.append(
-                    HACOverallSensor(
-                        coordinator,
-                        entry,
-                        description,
-                        student_id,
-                        quarter_lower,
-                    )
-                )
-
-            # Add per-course sensors for this quarter
-            quarter_data = all_quarters_data.get(quarter, {})
-            courses = quarter_data.get("courses", [])
-
-            _LOGGER.debug("Creating sensors for %d courses in %s", len(courses), quarter)
-
-            for course in courses:
-                course_index = course.get("course_index")
-                course_name = _clean_course_name(course.get("course", f"Course {course_index}"))
-
-                for description in COURSE_SENSORS:
-                    entities.append(
-                        HACCourseSensor(
-                            coordinator,
-                            entry,
-                            description,
-                            course_index,
-                            course_name,
-                            student_id,
-                            quarter_lower,
-                            via_device,
-                        )
-                    )
+        entities.extend(_new_quarter_entities(all_quarters_data))
 
         _LOGGER.info("Adding %d total entities", len(entities))
-        entry_data = hass.data[DOMAIN][entry.entry_id]
-        entry_data[DATA_UNIQUE_IDS].update(e.unique_id for e in entities)
         entry_data[DATA_ENTITY_QUARTERS] = quarters_available
         async_add_entities(entities)
         _LOGGER.info("Successfully set up HAC Grades sensors")
@@ -1058,6 +1072,30 @@ async def async_setup_entry(
         # Write entity metadata for dashboard generation (async)
         entity_ids = await _lookup_student_entity_ids(hass, entry.entry_id)
         await _write_entity_metadata(hass, student_id, all_quarters_data, entity_ids)
+
+        @callback
+        def _add_new_quarter_entities() -> None:
+            """Add sensors for quarters or courses missing from the first fetch.
+
+            A quarter that failed to scrape at startup (e.g. browserless
+            dropped the connection) would otherwise have no sensors until
+            the next restart.
+            """
+            all_quarters_data = coordinator.data.get("all_quarters", {}) if coordinator.data else {}
+            new_entities = _new_quarter_entities(all_quarters_data)
+            if not new_entities:
+                return
+
+            _LOGGER.info("Adding %d entities for newly available quarter data", len(new_entities))
+            entry_data[DATA_ENTITY_QUARTERS] = [
+                q for q in QUARTERS if q in entry_data[DATA_ENTITY_QUARTERS] or q in all_quarters_data
+            ]
+            async_add_entities(new_entities)
+            hass.async_create_task(
+                _write_entity_metadata(hass, student_id, all_quarters_data, entity_ids)
+            )
+
+        entry.async_on_unload(coordinator.async_add_listener(_add_new_quarter_entities))
 
     # Schedule entity creation in the background (non-blocking)
     hass.async_create_task(_create_entities_when_ready())
