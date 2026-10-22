@@ -3,7 +3,7 @@
   # HAC Grades - Home Assistant Custom Integration
 
   [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/custom-components/hacs)
-  ![Version](https://img.shields.io/badge/version-0.4.2-blue.svg)
+  ![Version](https://img.shields.io/badge/version-0.4.3-blue.svg)
   ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
   **A Home Assistant custom integration that fetches student grades from Home Access Center (HAC) and creates dynamic sensors for monitoring academic performance.**
